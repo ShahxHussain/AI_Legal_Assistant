@@ -1,0 +1,30 @@
+# Render Blueprint — Court Companion API
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: court-companion-api
+    runtime: docker
+    rootDir: backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: TOGETHER_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: google/gemma-4-31B-it
+      - key: LLM_MAX_TOKENS
+        value: "3200"
+      - key: LLM_CONVERSATIONAL_MAX_TOKENS
+        value: "700"
+      - key: LLM_REPETITION_PENALTY
+        value: "1.05"
+      - key: LLM_FREQUENCY_PENALTY
+        value: "0.1"
+      - key: LLM_REASONING_EFFORT
+        value: none
+      - key: EMBEDDING_MODEL
+        value: all-MiniLM-L6-v2
+      - key: TOP_K
+        value: "8"
+      - key: HOST
+        value: 0.0.0.0
