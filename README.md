@@ -202,7 +202,8 @@ User Query
 
 | Property | Value |
 |----------|-------|
-| **Candidates** | Mistral 7B Instruct, Llama 3, GPT models, Gemma |
+| **Provider** | Together.ai (`together` Python SDK) |
+| **Model** | `meta-llama/Meta-Llama-3-8B-Instruct-Lite` |
 | **Purpose** | Generate natural-language legal explanations from retrieved context |
 
 ---

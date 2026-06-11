@@ -135,7 +135,7 @@ Millions of citizens in Pakistan cannot easily understand:
 | API-4 | Retrieve top-K relevant chunks from FAISS index |
 | API-5 | Construct LLM prompt using retrieved context only |
 | API-6 | Return structured JSON: `answer`, `sources[]`, `disclaimer` |
-| API-7 | LLM API keys stored in server environment variables only |
+| API-7 | Together.ai API key (`TOGETHER_API_KEY`) stored in server env only |
 | API-8 | CORS enabled for Flutter web (optional); APK uses direct HTTPS |
 
 ### 7.3 Knowledge base & RAG
@@ -155,7 +155,7 @@ Millions of citizens in Pakistan cannot easily understand:
 
 | Category | Requirement |
 |----------|-------------|
-| **Cost** | Free-tier hosting and LLM APIs for hackathon |
+| **Cost** | Free-tier hosting; Together.ai API for LLM inference |
 | **Security** | No secrets in Flutter APK; HTTPS only in production |
 | **Statelessness** | No database; each request is independent |
 | **Maintainability** | Pre-built index; no PDF reprocessing on every deploy |
@@ -222,7 +222,7 @@ Questions to validate during demo and judging:
 
 | # | Question | Owner | Status |
 |---|----------|-------|--------|
-| 1 | Groq vs Gemini for LLM? | Dev | Open — pick one with available free API key |
+| 1 | LLM provider | Dev | **Resolved** — Together.ai, `meta-llama/Meta-Llama-3-8B-Instruct-Lite` |
 | 2 | Exact Render service plan? | Dev | Open |
 | 3 | Devpost official URL? | Team | Pending organizer email |
 

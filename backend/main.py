@@ -1,12 +1,14 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from config import settings
+from rag.document_parser import extract_document_text
 from rag.embedder import Embedder
 from rag.generator import Generator
+from rag.query_intent import is_conversational_query, is_legal_query
 from rag.retriever import Retriever
 
 embedder: Embedder | None = None
@@ -54,14 +56,18 @@ class AskRequest(BaseModel):
 
 class SourceItem(BaseModel):
     document: str
-    section: str
+    section: str = ""
+    title: str = ""
     excerpt: str
+    text: str
 
 
 class AskResponse(BaseModel):
     answer: str
     sources: list[SourceItem]
     disclaimer: str
+    document_name: str | None = None
+    document_truncated: bool = False
 
 
 class HealthResponse(BaseModel):
@@ -70,6 +76,14 @@ class HealthResponse(BaseModel):
     chunk_count: int
     llm_configured: bool
     index_error: str | None = None
+
+
+def _ensure_llm_ready() -> None:
+    if generator is None or not generator.is_configured:
+        raise HTTPException(
+            status_code=503,
+            detail="TOGETHER_API_KEY is not configured on the server",
+        )
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -96,10 +110,14 @@ def ask(body: AskRequest) -> AskResponse:
             detail=index_load_error or "Search index is not loaded",
         )
 
-    if generator is None or not generator.is_configured:
-        raise HTTPException(
-            status_code=503,
-            detail="TOGETHER_API_KEY is not configured on the server",
+    _ensure_llm_ready()
+
+    if is_conversational_query(question):
+        answer = generator.generate_conversational(question)
+        return AskResponse(
+            answer=answer,
+            sources=[],
+            disclaimer=settings.disclaimer,
         )
 
     chunks = retriever.retrieve(question)
@@ -110,12 +128,76 @@ def ask(body: AskRequest) -> AskResponse:
         )
 
     answer = generator.generate(question, chunks)
-    sources = [SourceItem(**c.to_source_dict()) for c in chunks]
+    cited = [c for c in chunks if c.score >= settings.source_min_score]
+    sources = [SourceItem(**c.to_source_dict()) for c in cited]
 
     return AskResponse(
         answer=answer,
         sources=sources,
         disclaimer=settings.disclaimer,
+    )
+
+
+@app.post("/analyze-document", response_model=AskResponse)
+async def analyze_document(
+    file: UploadFile = File(...),
+    question: str = Form(default=""),
+) -> AskResponse:
+    """
+    Upload a PDF or TXT document for legal information analysis.
+    Optional `question` — if omitted, returns a general document summary.
+    """
+    _ensure_llm_ready()
+
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename is required")
+
+    raw = await file.read()
+    try:
+        doc_text, truncated = extract_document_text(raw, file.filename)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    q = question.strip()
+    rag_chunks = []
+    if (
+        q
+        and is_legal_query(q)
+        and retriever is not None
+        and retriever.is_loaded
+    ):
+        retrieved = retriever.retrieve(q)
+        rag_chunks = [c for c in retrieved if c.score >= settings.source_min_score]
+
+    answer = generator.generate_document_analysis(
+        document_text=doc_text,
+        filename=file.filename,
+        question=q or None,
+        rag_chunks=rag_chunks or None,
+    )
+
+    preview = doc_text[:280].strip()
+    if len(doc_text) > 280:
+        preview += "..."
+
+    sources: list[SourceItem] = [
+        SourceItem(
+            document=file.filename,
+            section="",
+            title="Uploaded document",
+            excerpt=preview,
+            text=doc_text,
+        )
+    ]
+    for chunk in rag_chunks:
+        sources.append(SourceItem(**chunk.to_source_dict()))
+
+    return AskResponse(
+        answer=answer,
+        sources=sources,
+        disclaimer=settings.disclaimer,
+        document_name=file.filename,
+        document_truncated=truncated,
     )
 
 

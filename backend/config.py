@@ -15,14 +15,25 @@ class Settings(BaseSettings):
 
     together_api_key: str = ""
     llm_model: str = "meta-llama/Meta-Llama-3-8B-Instruct-Lite"
+    llm_max_tokens: int = 550
+    llm_conversational_max_tokens: int = 220
+    llm_temperature: float = 0.25
+    llm_repetition_penalty: float = 1.18
+    llm_frequency_penalty: float = 0.35
     embedding_model: str = "all-MiniLM-L6-v2"
     top_k: int = 5
+    retrieval_min_score: float = 0.18
+    source_min_score: float = 0.42
     chunk_size_words: int = 600
     chunk_overlap_words: int = 75
+    section_chunk_min_words: int = 35
+    section_chunk_max_words: int = 900
     data_dir: Path = PROJECT_ROOT / "data"
     index_dir: Path = BACKEND_DIR / "rag" / "index"
     host: str = "0.0.0.0"
     port: int = 8000
+    upload_max_bytes: int = 5 * 1024 * 1024
+    upload_max_chars: int = 14_000
 
     assistant_name: str = "Court Companion | AI Legal Bilingual Assistant"
     disclaimer: str = (

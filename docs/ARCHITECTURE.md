@@ -21,7 +21,7 @@ flowchart LR
     APK[Flutter APK]
     API[FastAPI Backend]
     FAISS[(FAISS Index)]
-    LLM[Groq / Gemini API]
+    LLM[Together.ai API]
 
     User --> APK
     APK -->|HTTPS POST /ask| API
@@ -48,7 +48,7 @@ flowchart TB
     end
 
     subgraph External["External Services"]
-        LLM[Groq or Gemini\nLLM API]
+        LLM[Together.ai\nMeta-Llama-3-8B-Instruct-Lite]
     end
 
     subgraph BuildTime["Build Time — Local / CI"]
@@ -88,7 +88,7 @@ flowchart TB
 | `rag/embedder.py` | Query embedding via Sentence Transformers |
 | `rag/generator.py` | Prompt construction + LLM call |
 | `rag/prompts.py` | System prompt — context-only answers |
-| `config.py` | Env vars: `LLM_API_KEY`, `TOP_K`, model name |
+| `config.py` | Env vars: `TOGETHER_API_KEY`, `LLM_MODEL`, `TOP_K` |
 
 ### 4.3 Knowledge index (FAISS)
 
@@ -99,13 +99,32 @@ flowchart TB
 
 Built offline via `scripts/build_index.py` — not at server request time.
 
-### 4.4 LLM provider
+### 4.4 LLM provider — Together.ai
 
 | Property | Value |
 |----------|-------|
-| Options | Groq (Llama/Mistral) or Google Gemini |
-| Access | Server-side API key in environment |
+| Provider | [Together.ai](https://www.together.ai/) |
+| SDK | `together` Python package |
+| Model | `meta-llama/Meta-Llama-3-8B-Instruct-Lite` |
+| Access | `TOGETHER_API_KEY` in server environment only |
 | Role | Generate natural-language answer from retrieved context |
+
+**Example (server-side):**
+
+```python
+from together import Together
+
+client = Together()  # reads TOGETHER_API_KEY from env
+
+response = client.chat.completions.create(
+    model="meta-llama/Meta-Llama-3-8B-Instruct-Lite",
+    messages=[
+        {"role": "system", "content": system_prompt_with_legal_context},
+        {"role": "user", "content": user_question},
+    ],
+)
+answer = response.choices[0].message.content
+```
 
 ---
 
@@ -247,7 +266,7 @@ flowchart TB
 
     subgraph Render["Render.com — Free Tier"]
         Web[FastAPI Web Service]
-        Env[Env Vars\nLLM_API_KEY]
+        Env[Env Vars\nTOGETHER_API_KEY]
         Files[index.faiss + chunks.json\nbundled in image]
     end
 
@@ -268,7 +287,7 @@ flowchart TB
 |------|--------|
 | 1 | Run `build_index.py` locally |
 | 2 | Commit index artifacts (or build in Dockerfile) |
-| 3 | Set `LLM_API_KEY` in Render env |
+| 3 | Set `TOGETHER_API_KEY` in Render env |
 | 4 | Deploy FastAPI with `uvicorn` |
 | 5 | Verify `GET /health` |
 | 6 | Point Flutter `API_BASE_URL` to Render URL |
@@ -278,9 +297,8 @@ flowchart TB
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `LLM_API_KEY` | Yes | Groq or Gemini API key |
-| `LLM_PROVIDER` | Yes | `groq` or `gemini` |
-| `LLM_MODEL` | No | Model name override |
+| `TOGETHER_API_KEY` | Yes | Together.ai API key |
+| `LLM_MODEL` | No | Default: `meta-llama/Meta-Llama-3-8B-Instruct-Lite` |
 | `TOP_K` | No | Retrieval count (default: 5) |
 | `INDEX_PATH` | No | Path to FAISS index directory |
 
@@ -318,7 +336,7 @@ ai_legal_assistant/
 │   │       └── chunks.json
 │   └── scripts/
 │       └── build_index.py
-├── flutter_app/                 # Flutter project (to be created)
+├── Frontend/                    # Flutter mobile app
 ├── data/
 │   ├── *.pdf
 │   └── README.md
@@ -340,7 +358,7 @@ ai_legal_assistant/
 | API | FastAPI (Python 3.11+) |
 | Embeddings | sentence-transformers (`all-MiniLM-L6-v2`) |
 | Vector search | FAISS |
-| LLM | Groq or Google Gemini (API) |
+| LLM | Together.ai — `meta-llama/Meta-Llama-3-8B-Instruct-Lite` |
 | PDF parsing | pypdf |
 | Hosting | Render (free tier) |
 | Database | None (MVP) |

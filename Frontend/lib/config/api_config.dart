@@ -1,0 +1,33 @@
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
+
+/// API configuration for Court Companion backend.
+///
+/// Auto-detects platform when `API_BASE_URL` is not set:
+///   Web / Windows / desktop  → http://localhost:8000
+///   Android emulator         → http://10.0.2.2:8000
+///
+/// Override at run/build time:
+///   flutter run -d chrome
+///   flutter run -d android --dart-define=API_BASE_URL=http://192.168.1.10:8000
+///   flutter build apk --dart-define=API_BASE_URL=https://your-app.onrender.com
+class ApiConfig {
+  static const String _envUrl = String.fromEnvironment('API_BASE_URL');
+
+  static String get baseUrl {
+    if (_envUrl.isNotEmpty) {
+      return _envUrl;
+    }
+    if (kIsWeb) {
+      return 'http://localhost:8000';
+    }
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8000';
+    }
+    return 'http://localhost:8000';
+  }
+
+  static String get healthUrl => '$baseUrl/health';
+  static String get askUrl => '$baseUrl/ask';
+  static String get analyzeDocumentUrl => '$baseUrl/analyze-document';
+}

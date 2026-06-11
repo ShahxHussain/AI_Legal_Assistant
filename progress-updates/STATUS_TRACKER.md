@@ -6,15 +6,15 @@ Update this file **after every working step** (along with `CHANGE_LOG.md` and `D
 
 | Step | Phase | Status | Start Date | Target Date | Actual End Date | Notes |
 |---|---|---|---|---|---|---|
-| 1 | Project Bootstrap & Documentation | DONE | 2026-06-10 | 2026-06-13 | 2026-06-10 | README, `docs/PRD.md`, `docs/ARCHITECTURE.md`, `progress-updates/`, `Hackathon_updates/`. |
-| 2 | Backend Foundation (FastAPI) | NOT_STARTED | - | 2026-06-11 | - | Scaffold API app, env config, `/health` endpoint, dev run scripts. |
-| 3 | Legal Knowledge Base Collection | DONE | 2026-06-10 | - | 2026-06-10 | PPC, CrPC, ATA PDFs in `data/`; `data/README.md` inventory and topic coverage. |
-| 4 | Data Processing & Chunking Pipeline | NOT_STARTED | - | 2026-06-11 | - | Extract PDFs, normalize text, chunk (500–1000 tokens, 50–100 overlap). |
-| 5 | Embeddings & FAISS Vector Index | NOT_STARTED | - | 2026-06-11 | - | Sentence Transformers (`all-MiniLM-L6-v2`); persist `index.faiss` + `chunks.json`. |
-| 6 | RAG Pipeline & LLM Integration | NOT_STARTED | - | 2026-06-12 | - | Retrieve → context → prompt → Groq/Gemini; API keys server-side only. |
-| 7 | Core Legal Q&A API | NOT_STARTED | - | 2026-06-12 | - | `POST /ask` with grounded answers and source citations. |
+| 1 | Project Bootstrap & Documentation | DONE | 2026-06-10 | 2026-06-13 | 2026-06-10 | README, `docs/PRD.md`, `docs/ARCHITECTURE.md`, tracking folders. |
+| 2 | Backend Foundation (FastAPI) | DONE | 2026-06-10 | 2026-06-11 | 2026-06-10 | `backend/` scaffold, venv, `.env.example`, `/health`, CORS, Dockerfile. |
+| 3 | Legal Knowledge Base Collection | DONE | 2026-06-10 | - | 2026-06-10 | PPC, CrPC, ATA PDFs in `data/`; `data/README.md`. |
+| 4 | Data Processing & Chunking Pipeline | DONE | 2026-06-10 | 2026-06-11 | 2026-06-10 | Section-aware `build_index.py` — 983 statute chunks with section/title/topic metadata. |
+| 5 | Embeddings & FAISS Vector Index | DONE | 2026-06-10 | 2026-06-11 | 2026-06-10 | `all-MiniLM-L6-v2`; 983 vectors in `index.faiss` + `chunks.json`. |
+| 6 | RAG Pipeline & LLM Integration | DONE | 2026-06-10 | 2026-06-12 | 2026-06-10 | Together.ai + production prompt v2; language detection. |
+| 7 | Core Legal Q&A API | DONE | 2026-06-10 | 2026-06-12 | 2026-06-10 | `POST /ask` tested locally with sources. |
 | 8 | Backend Deployment (Render) | NOT_STARTED | - | 2026-06-12 | - | Deploy stateless FastAPI + FAISS; public HTTPS URL for Flutter APK. |
-| 9 | Flutter App Shell & Chat UI | NOT_STARTED | - | 2026-06-13 | - | Chat UI wired to deployed API; release APK build. |
+| 9 | Flutter App Shell & Chat UI | DONE | 2026-06-10 | 2026-06-13 | 2026-06-10 | `Frontend/` — chat UI, API service, sources, APK-ready config. |
 | 10 | Testing & Quality Assurance | NOT_STARTED | - | 2026-06-13 | - | Smoke tests for `/health`, `/ask`, and APK → API flow. |
 | 11 | Hackathon Submission Packaging | NOT_STARTED | - | 2026-06-13 | - | Devpost submission, demo script, screenshots, repo links. |
 
@@ -22,18 +22,17 @@ Update this file **after every working step** (along with `CHANGE_LOG.md` and `D
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Vector store | **FAISS** (not ChromaDB) | ~400 chunks; lightest deploy; file-based index |
+| Vector store | **FAISS** (not ChromaDB) | ~983 section chunks; lightest deploy; file-based index |
 | App database | **None** | Stateless API; no user/chat storage needed |
-| LLM | **Groq or Gemini** (free tier) | No GPU hosting; key in server env vars |
+| LLM | **Together.ai** — `meta-llama/Meta-Llama-3-8B-Instruct-Lite` | `TOGETHER_API_KEY` in server env |
 | Hosting | **Render** (or similar free tier) | Public URL required for Flutter APK |
-| Client | **Flutter APK** | Calls deployed backend over HTTPS |
+| Client | **Flutter APK** (`Frontend/`) | Calls deployed backend over HTTPS |
 
 ## On Hold (Not in MVP)
 
 | Module | Status | Notes |
 |---|---|---|
 | Firebase Auth & Firestore | ON_HOLD | No app data for MVP |
-| Multilingual (EN / Urdu) | ON_HOLD | English-first for Round 2 demo |
 | Voice Support (STT / TTS) | ON_HOLD | Post-MVP accessibility feature |
 | Legal Resource Center | ON_HOLD | Downloadable templates — post-MVP |
 | Lawyer Recommendation | ON_HOLD | Category-based matching — post-MVP |
