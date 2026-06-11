@@ -11,7 +11,7 @@ import '../widgets/chat_bubble.dart';
 import '../widgets/language_picker.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, this.initialLanguage = 'auto'});
+  const ChatScreen({super.key, this.initialLanguage = kDefaultLanguage});
 
   final String initialLanguage;
 
@@ -27,7 +27,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isSending = false;
   bool? _apiHealthy;
   PlatformFile? _attachedFile;
-  String _language = 'auto';
+  String _language = kDefaultLanguage;
 
   static const _suggestions = [
     ('What is an FIR?', Icons.description_outlined),

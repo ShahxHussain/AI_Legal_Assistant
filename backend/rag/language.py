@@ -10,7 +10,6 @@ language selector for guaranteed output.
 import re
 
 SUPPORTED_LANGUAGES = {
-    "auto",
     "english",
     "urdu_script",
     "roman_urdu",
@@ -19,6 +18,8 @@ SUPPORTED_LANGUAGES = {
     "sindhi",
     "balochi",
 }
+
+DEFAULT_LANGUAGE = "urdu_script"
 
 _ARABIC_SCRIPT = re.compile(r"[\u0600-\u06FF]")
 # Characters unique (or near-unique) to Pashto orthography
@@ -69,10 +70,9 @@ def detect_response_language(question: str, override: str | None = None) -> str:
     Return one of: 'english', 'urdu_script', 'roman_urdu', 'pashto',
     'punjabi', 'sindhi', 'balochi'.
 
-    `override` (from the app's language selector) wins over detection
-    unless it is None or 'auto'.
+    `override` (from the app's language selector) wins over detection.
     """
-    if override and override != "auto" and override in SUPPORTED_LANGUAGES:
+    if override and override in SUPPORTED_LANGUAGES:
         return override
 
     text = question.strip()

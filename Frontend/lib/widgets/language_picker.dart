@@ -3,11 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
 
-/// Backend language codes + display labels.
+/// Backend language codes + display labels. Default: Urdu.
+const kDefaultLanguage = 'urdu_script';
+
 const kSupportedLanguages = <(String, String)>[
-  ('auto', 'Auto-detect'),
-  ('english', 'English'),
   ('urdu_script', 'اردو (Urdu)'),
+  ('english', 'English'),
   ('roman_urdu', 'Roman Urdu'),
   ('pashto', 'پښتو (Pashto)'),
   ('punjabi', 'پنجابی (Punjabi)'),
@@ -27,18 +28,14 @@ class LanguagePicker extends StatelessWidget {
     super.key,
     required this.value,
     required this.onChanged,
-    this.compact = true,
   });
 
   final String value;
   final ValueChanged<String> onChanged;
 
-  /// Compact shows "Auto" for auto-detect; full shows "Auto-detect".
-  final bool compact;
-
   @override
   Widget build(BuildContext context) {
-    final label = value == 'auto' && compact ? 'Auto' : languageLabel(value);
+    final label = languageLabel(value);
 
     return PopupMenuButton<String>(
       tooltip: 'Response language',

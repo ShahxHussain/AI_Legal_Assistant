@@ -10,17 +10,22 @@ from config import settings
 from rag.document_parser import extract_document_text
 from rag.embedder import Embedder
 from rag.generator import Generator
-from rag.language import SUPPORTED_LANGUAGES, detect_response_language
+from rag.language import (
+    DEFAULT_LANGUAGE,
+    SUPPORTED_LANGUAGES,
+    detect_response_language,
+)
 from rag.output_guard import sanitize_llm_output
 from rag.query_intent import is_conversational_query, is_legal_query
 from rag.retriever import Retriever
 
 
-def _language_override(value: str) -> str | None:
-    lang = (value or "auto").strip().lower()
-    if lang in SUPPORTED_LANGUAGES and lang != "auto":
+def _language_override(value: str) -> str:
+    """Resolve the requested response language; fall back to Urdu."""
+    lang = (value or "").strip().lower()
+    if lang in SUPPORTED_LANGUAGES:
         return lang
-    return None
+    return DEFAULT_LANGUAGE
 
 embedder: Embedder | None = None
 retriever: Retriever | None = None
@@ -63,7 +68,7 @@ app.add_middleware(
 
 class AskRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000)
-    language: str = Field(default="auto", max_length=20)
+    language: str = Field(default=DEFAULT_LANGUAGE, max_length=20)
 
 
 class SourceItem(BaseModel):
@@ -248,7 +253,7 @@ def ask_stream(body: AskRequest) -> StreamingResponse:
 async def analyze_document(
     file: UploadFile = File(...),
     question: str = Form(default=""),
-    language: str = Form(default="auto"),
+    language: str = Form(default=DEFAULT_LANGUAGE),
 ) -> AskResponse:
     """
     Upload a PDF or TXT document for legal information analysis.

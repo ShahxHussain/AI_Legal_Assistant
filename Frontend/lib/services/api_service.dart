@@ -33,7 +33,7 @@ class ApiService {
   /// {"type":"meta"|"delta"|"done"|"error", ...}
   Stream<Map<String, dynamic>> askStream(
     String question, {
-    String language = 'auto',
+    String language = 'urdu_script',
   }) async* {
     final request = http.Request('POST', Uri.parse(ApiConfig.askStreamUrl))
       ..headers['Content-Type'] = 'application/json'
@@ -64,7 +64,10 @@ class ApiService {
     }
   }
 
-  Future<AskResponse> ask(String question, {String language = 'auto'}) async {
+  Future<AskResponse> ask(
+    String question, {
+    String language = 'urdu_script',
+  }) async {
     final response = await _client
         .post(
           Uri.parse(ApiConfig.askUrl),
@@ -91,7 +94,7 @@ class ApiService {
     required List<int> bytes,
     required String filename,
     String? question,
-    String language = 'auto',
+    String language = 'urdu_script',
   }) async {
     final request = http.MultipartRequest(
       'POST',

@@ -15,7 +15,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String _language = 'auto';
+  String _language = kDefaultLanguage;
 
   void _openChat(BuildContext context) {
     Navigator.push(
@@ -96,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 8),
                         LanguagePicker(
                           value: _language,
-                          compact: false,
                           onChanged: (value) =>
                               setState(() => _language = value),
                         ),

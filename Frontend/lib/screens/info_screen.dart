@@ -110,9 +110,9 @@ class InfoScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Your language is detected automatically and the reply '
-                      'comes back in the same language. You can also pick a '
-                      'language from the selector at the top of the chat.',
+                      'Replies are in Urdu by default. You can switch to any '
+                      'language from the selector on the Home screen or at '
+                      'the top of the chat.',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         height: 1.5,
