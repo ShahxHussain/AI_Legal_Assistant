@@ -8,141 +8,170 @@ import 'info_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  void _openChat(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(builder: (_) => const ChatScreen()),
+    );
+  }
+
+  void _openInfo(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(builder: (_) => const InfoScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 36),
-              Text(
-                'Kya karna chahte hain?',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.muted,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              _HomeOptionCard(
-                title: 'Asal Court Companion',
-                subtitle:
-                    'Legal sawal + PDF/TXT upload — FIR, bail, arrest, PPC sections',
-                icon: Icons.chat_rounded,
-                accent: AppColors.secondary,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute<void>(
-                      builder: (_) => const ChatScreen(),
+        child: Column(
+          children: [
+            _buildTopBar(context),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 44),
+                    Text(
+                      'السلام علیکم!',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.notoNastaliqUrdu(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.secondary,
+                        height: 1.7,
+                      ),
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              _HomeOptionCard(
-                title: 'Info',
-                subtitle:
-                    'App ke baare mein maloomat — sources, languages aur disclaimer',
-                icon: Icons.info_outline_rounded,
-                accent: AppColors.accent,
-                outlined: true,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute<void>(
-                      builder: (_) => const InfoScreen(),
+                    const SizedBox(height: 8),
+                    Text(
+                      'میں آپ کی قانونی رہنمائی کیسے کر سکتا ہوں؟',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.notoNastaliqUrdu(
+                        fontSize: 15,
+                        color: AppColors.textDark,
+                        height: 2,
+                      ),
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: 32),
-              Text(
-                'AI for Civic Innovation 2026 · Pakistan',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: AppColors.muted.withValues(alpha: 0.7),
+                    const SizedBox(height: 22),
+                    Text(
+                      'Ask your legal question in\nyour own words.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark.withValues(alpha: 0.8),
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    _OptionCard(
+                      icon: Icons.chat_bubble_rounded,
+                      title: 'Type your question',
+                      subtitle: 'Ask in text',
+                      onTap: () => _openChat(context),
+                    ),
+                    const SizedBox(height: 14),
+                    _OptionCard(
+                      icon: Icons.upload_file_rounded,
+                      title: 'Analyze a document',
+                      subtitle: 'Upload a PDF or TXT file',
+                      onTap: () => _openChat(context),
+                    ),
+                    const SizedBox(height: 26),
+                    const _TrustNote(),
+                    const SizedBox(height: 30),
+                    Text(
+                      'AI for Civic Innovation 2026 · Pakistan',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: AppColors.muted.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
                 ),
-                textAlign: TextAlign.center,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Column(
-      children: [
-        Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.primary, AppColors.primaryLight],
+  Widget _buildTopBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 12, 0),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppColors.secondary,
+              borderRadius: BorderRadius.circular(12),
             ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+            child: const Icon(
+              Icons.balance_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Court Companion',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textDark,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              Text(
+                'AI Legal Assistant',
+                style: GoogleFonts.inter(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.muted,
+                ),
               ),
             ],
           ),
-          child: const Icon(
-            Icons.balance_rounded,
-            color: Colors.white,
-            size: 36,
+          const Spacer(),
+          IconButton(
+            onPressed: () => _openInfo(context),
+            tooltip: 'About Court Companion',
+            icon: const Icon(Icons.menu_rounded),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: AppColors.textDark,
+            ),
           ),
-        ),
-        const SizedBox(height: 18),
-        Text(
-          'Court Companion',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
-            color: AppColors.primary,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'AI Legal Bilingual Assistant',
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.muted,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-class _HomeOptionCard extends StatelessWidget {
-  const _HomeOptionCard({
+class _OptionCard extends StatelessWidget {
+  const _OptionCard({
+    required this.icon,
     required this.title,
     required this.subtitle,
-    required this.icon,
-    required this.accent,
     required this.onTap,
-    this.outlined = false,
   });
 
+  final IconData icon;
   final String title;
   final String subtitle;
-  final IconData icon;
-  final Color accent;
   final VoidCallback onTap;
-  final bool outlined;
 
   @override
   Widget build(BuildContext context) {
@@ -150,43 +179,29 @@ class _HomeOptionCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
         child: Ink(
           decoration: BoxDecoration(
-            color: outlined ? AppColors.surface : AppColors.primary,
-            borderRadius: BorderRadius.circular(22),
+            color: AppColors.accentSoft.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: outlined ? AppColors.border : Colors.transparent,
-              width: outlined ? 1.5 : 0,
+              color: AppColors.secondary.withValues(alpha: 0.10),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: outlined ? 0.06 : 0.2),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
-              ),
-            ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(22),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
             child: Row(
               children: [
                 Container(
-                  width: 52,
-                  height: 52,
+                  width: 46,
+                  height: 46,
                   decoration: BoxDecoration(
-                    color: outlined
-                        ? accent.withValues(alpha: 0.12)
-                        : AppColors.accent,
-                    borderRadius: BorderRadius.circular(14),
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(13),
                   ),
-                  child: Icon(
-                    icon,
-                    color: outlined ? accent : AppColors.surface,
-                    size: 26,
-                  ),
+                  child: Icon(icon, color: AppColors.secondary, size: 22),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,35 +209,66 @@ class _HomeOptionCard extends StatelessWidget {
                       Text(
                         title,
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: outlined ? AppColors.primary : Colors.white,
+                          color: AppColors.textDark,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 3),
                       Text(
                         subtitle,
                         style: GoogleFonts.inter(
                           fontSize: 13,
-                          height: 1.45,
-                          color: outlined
-                              ? AppColors.muted
-                              : Colors.white.withValues(alpha: 0.85),
+                          color: AppColors.muted,
                         ),
                       ),
                     ],
                   ),
                 ),
                 Icon(
-                  Icons.arrow_forward_rounded,
-                  color: outlined
-                      ? AppColors.primary.withValues(alpha: 0.6)
-                      : Colors.white.withValues(alpha: 0.8),
+                  Icons.chevron_right_rounded,
+                  color: AppColors.muted.withValues(alpha: 0.8),
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TrustNote extends StatelessWidget {
+  const _TrustNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.verified_user_rounded,
+            size: 20,
+            color: AppColors.secondary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "Answers are based on Pakistan's legal framework and verified legal sources.",
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                color: AppColors.muted,
+                height: 1.45,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

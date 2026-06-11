@@ -115,24 +115,15 @@ class _AssistantAvatar extends StatelessWidget {
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isError
-              ? [AppColors.error, AppColors.error.withValues(alpha: 0.7)]
-              : [AppColors.primary, AppColors.primaryLight],
-        ),
+        color: isError
+            ? AppColors.error.withValues(alpha: 0.1)
+            : AppColors.secondary,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Icon(
         isError ? Icons.error_outline_rounded : Icons.balance_rounded,
         size: 18,
-        color: Colors.white,
+        color: isError ? AppColors.error : Colors.white,
       ),
     );
   }
@@ -195,24 +186,16 @@ class _UserBubble extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 10),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.secondary, AppColors.primary],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: AppColors.accentSoft.withValues(alpha: 0.65),
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
             bottomLeft: Radius.circular(20),
             bottomRight: Radius.circular(6),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(
+            color: AppColors.secondary.withValues(alpha: 0.12),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -221,10 +204,10 @@ class _UserBubble extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.25),
+                    color: AppColors.secondary.withValues(alpha: 0.25),
                   ),
                 ),
                 child: Row(
@@ -233,14 +216,14 @@ class _UserBubble extends StatelessWidget {
                     const Icon(
                       Icons.insert_drive_file_rounded,
                       size: 16,
-                      color: Colors.white,
+                      color: AppColors.secondary,
                     ),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
                         attachmentName!,
                         style: GoogleFonts.inter(
-                          color: Colors.white,
+                          color: AppColors.textDark,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -256,7 +239,7 @@ class _UserBubble extends StatelessWidget {
               Text(
                 text,
                 style: GoogleFonts.inter(
-                  color: Colors.white,
+                  color: AppColors.textDark,
                   fontSize: 15.5,
                   height: 1.5,
                   fontWeight: FontWeight.w500,

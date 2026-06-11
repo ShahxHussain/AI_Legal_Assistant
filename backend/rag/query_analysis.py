@@ -8,7 +8,7 @@ import re
 LEGAL_TOPIC_HINTS: list[tuple[list[str], list[str], list[str], list[str]]] = [
     # triggers, extra terms, section numbers, exact phrase boosts in chunk text
     (
-        ["fir", "first information"],
+        ["fir", "first information", "file a report", "report a crime", "report a theft", "register a complaint", "register a case"],
         ["first information report", "section 154", "cognizable", "police station", "complaint"],
         ["154"],
         [
@@ -67,7 +67,9 @@ def extract_section_numbers(text: str) -> set[str]:
     sections: set[str] = set()
     for match in re.finditer(r"(?:section|§)\s*(\d+[A-Za-z]?)", text, re.I):
         sections.add(match.group(1))
-    for match in re.finditer(r"\b(\d{2,4})\b", text):
+    # Bare numbers can be section references, but skip digits that are part of
+    # comma-formatted amounts like "150,000 rupees" (would match "150").
+    for match in re.finditer(r"(?<![\d,])(\d{2,4})(?![\d,])", text):
         num = match.group(1)
         if 1 <= int(num) <= 999:
             sections.add(num)

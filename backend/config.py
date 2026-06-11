@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.25
     llm_repetition_penalty: float = 1.18
     llm_frequency_penalty: float = 0.35
+    # "none" disables hidden thinking on reasoning models (e.g. Gemma 4),
+    # cutting latency. Set empty to omit the parameter for models that
+    # don't accept it.
+    llm_reasoning_effort: str = "none"
+    # Small fast model used only to translate non-English queries to English
+    # before retrieval (the FAISS index + embeddings are English-only).
+    translation_model: str = "meta-llama/Meta-Llama-3-8B-Instruct-Lite"
     embedding_model: str = "all-MiniLM-L6-v2"
     top_k: int = 5
     retrieval_min_score: float = 0.18

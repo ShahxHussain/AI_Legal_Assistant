@@ -29,12 +29,12 @@ class ApiService {
     return json['index_loaded'] == true;
   }
 
-  Future<AskResponse> ask(String question) async {
+  Future<AskResponse> ask(String question, {String language = 'auto'}) async {
     final response = await _client
         .post(
           Uri.parse(ApiConfig.askUrl),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'question': question}),
+          body: jsonEncode({'question': question, 'language': language}),
         )
         .timeout(const Duration(seconds: 120));
 
@@ -56,6 +56,7 @@ class ApiService {
     required List<int> bytes,
     required String filename,
     String? question,
+    String language = 'auto',
   }) async {
     final request = http.MultipartRequest(
       'POST',
@@ -72,6 +73,7 @@ class ApiService {
     if (q != null && q.isNotEmpty) {
       request.fields['question'] = q;
     }
+    request.fields['language'] = language;
 
     final streamed = await request.send().timeout(const Duration(seconds: 180));
     final response = await http.Response.fromStream(streamed);

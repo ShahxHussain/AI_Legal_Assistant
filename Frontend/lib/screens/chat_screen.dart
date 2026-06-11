@@ -23,6 +23,18 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isSending = false;
   bool? _apiHealthy;
   PlatformFile? _attachedFile;
+  String _language = 'auto';
+
+  static const _languages = <(String, String)>[
+    ('auto', 'Auto-detect'),
+    ('english', 'English'),
+    ('urdu_script', 'اردو (Urdu)'),
+    ('roman_urdu', 'Roman Urdu'),
+    ('pashto', 'پښتو (Pashto)'),
+    ('punjabi', 'پنجابی (Punjabi)'),
+    ('sindhi', 'سنڌي (Sindhi)'),
+    ('balochi', 'بلوچی (Balochi)'),
+  ];
 
   static const _suggestions = [
     ('What is an FIR?', Icons.description_outlined),
@@ -115,8 +127,9 @@ class _ChatScreenState extends State<ChatScreen> {
               bytes: file.bytes!,
               filename: file.name,
               question: text.isEmpty ? null : text,
+              language: _language,
             )
-          : await _api.ask(text);
+          : await _api.ask(text, language: _language);
 
       if (!mounted) return;
       setState(() {
@@ -221,7 +234,10 @@ class _ChatScreenState extends State<ChatScreen> {
       leading: IconButton(
         onPressed: () => Navigator.pop(context),
         icon: const Icon(Icons.arrow_back_rounded),
-        color: AppColors.primary,
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: AppColors.textDark,
+        ),
       ),
       title: Row(
         children: [
@@ -229,10 +245,8 @@ class _ChatScreenState extends State<ChatScreen> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.primary, AppColors.primaryLight],
-              ),
-              borderRadius: BorderRadius.circular(10),
+              color: AppColors.secondary,
+              borderRadius: BorderRadius.circular(11),
             ),
             child: const Icon(Icons.balance_rounded, color: Colors.white, size: 20),
           ),
@@ -245,11 +259,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w800,
                   fontSize: 16,
-                  color: AppColors.primary,
+                  color: AppColors.textDark,
                 ),
               ),
               Text(
-                'Chat · documents · legal Q&A',
+                'AI Legal Assistant',
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   color: AppColors.muted,
@@ -261,6 +275,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
       actions: [
+        _buildLanguageSelector(),
         Tooltip(
           message: ApiConfig.baseUrl,
           child: Padding(
@@ -272,6 +287,73 @@ class _ChatScreenState extends State<ChatScreen> {
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
         child: Container(height: 1, color: AppColors.border),
+      ),
+    );
+  }
+
+  Widget _buildLanguageSelector() {
+    final current = _languages.firstWhere(
+      (l) => l.$1 == _language,
+      orElse: () => _languages.first,
+    );
+    return PopupMenuButton<String>(
+      tooltip: 'Response language',
+      initialValue: _language,
+      onSelected: (value) => setState(() => _language = value),
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      itemBuilder: (context) => _languages.map((l) {
+        final selected = l.$1 == _language;
+        return PopupMenuItem<String>(
+          value: l.$1,
+          child: Row(
+            children: [
+              Icon(
+                selected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_off_rounded,
+                size: 18,
+                color: selected ? AppColors.accent : AppColors.muted,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                l.$2,
+                style: GoogleFonts.inter(
+                  fontSize: 13.5,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.translate_rounded,
+                size: 15, color: AppColors.secondary),
+            const SizedBox(width: 5),
+            Text(
+              _language == 'auto' ? 'Auto' : current.$2,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+            const Icon(Icons.expand_more_rounded,
+                size: 15, color: AppColors.muted),
+          ],
+        ),
       ),
     );
   }
@@ -419,7 +501,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     decoration: InputDecoration(
                       hintText: _attachedFile != null
                           ? 'Optional question about your document...'
-                          : 'Ask a legal question in English or Roman Urdu...',
+                          : 'Ask in English, Urdu, Pashto, Punjabi, Sindhi...',
                       prefixIcon: Icon(
                         Icons.chat_bubble_outline_rounded,
                         color: AppColors.muted.withValues(alpha: 0.7),

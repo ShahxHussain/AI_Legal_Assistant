@@ -34,16 +34,61 @@ class Generator:
         if not settings.llm_configured:
             raise RuntimeError("TOGETHER_API_KEY is not configured")
         if self._client is None:
-            self._client = Together(api_key=settings.together_api_key)
+            # Reasoning-capable models can be slow; retry transient timeouts.
+            self._client = Together(
+                api_key=settings.together_api_key,
+                timeout=90,
+                max_retries=2,
+            )
         return self._client
 
     def _completion_params(self) -> dict:
-        return {
+        params = {
             "model": settings.llm_model,
             "temperature": settings.llm_temperature,
             "repetition_penalty": settings.llm_repetition_penalty,
             "frequency_penalty": settings.llm_frequency_penalty,
         }
+        if settings.llm_reasoning_effort:
+            params["reasoning_effort"] = settings.llm_reasoning_effort
+        return params
+
+    def translate_query(self, question: str) -> str:
+        """
+        Translate a non-English question to English for retrieval.
+        The FAISS index and embedding model are English-only, so Urdu /
+        Pashto / Sindhi etc. queries must be translated before search.
+        Falls back to the original question on any failure.
+        """
+        try:
+            client = self._get_client()
+            response = client.chat.completions.create(
+                model=settings.translation_model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You translate questions about Pakistani law into "
+                            "clear English search queries. Output ONLY the "
+                            "English translation — no preamble, no notes. Keep "
+                            "legal terms like FIR, bail, PPC, CrPC as-is. "
+                            "Preserve EVERY legal topic in the question: name "
+                            "each offence (theft, murder, fraud...), each "
+                            "procedure (FIR registration, bail, arrest...), and "
+                            "any section numbers or amounts mentioned. If the "
+                            "question mentions FIR (ایف آئی آر), the translation "
+                            "MUST contain the word 'FIR'."
+                        ),
+                    },
+                    {"role": "user", "content": question.strip()},
+                ],
+                max_tokens=250,
+                temperature=0.0,
+            )
+            text = (response.choices[0].message.content or "").strip()
+            return text or question
+        except Exception:
+            return question
 
     def _chat(self, messages: list[dict], *, max_tokens: int) -> str:
         client = self._get_client()
@@ -55,9 +100,14 @@ class Generator:
         raw = response.choices[0].message.content or ""
         return sanitize_llm_output(raw)
 
-    def generate(self, question: str, chunks: list[RetrievedChunk]) -> str:
+    def generate(
+        self,
+        question: str,
+        chunks: list[RetrievedChunk],
+        language: str | None = None,
+    ) -> str:
         context = build_context(chunks)
-        lang = detect_response_language(question)
+        lang = detect_response_language(question, override=language)
         lang_rule = language_system_rule(lang)
 
         system_content = (
@@ -81,9 +131,13 @@ class Generator:
             max_tokens=settings.llm_max_tokens,
         )
 
-    def generate_conversational(self, question: str) -> str:
+    def generate_conversational(
+        self,
+        question: str,
+        language: str | None = None,
+    ) -> str:
         """Reply to greetings / meta questions without RAG context or sources."""
-        lang = detect_response_language(question)
+        lang = detect_response_language(question, override=language)
         lang_rule = language_system_rule(lang)
 
         system_content = (
@@ -107,10 +161,13 @@ class Generator:
         filename: str,
         question: str | None = None,
         rag_chunks: list[RetrievedChunk] | None = None,
+        language: str | None = None,
     ) -> str:
         """Analyze an uploaded document, optionally with a user question + statutes."""
         q = (question or "").strip()
-        lang = detect_response_language(q or document_text[:600])
+        lang = detect_response_language(
+            q or document_text[:600], override=language
+        )
         lang_rule = language_system_rule(lang)
 
         doc_context = f"### File: {filename}\n{document_text}"

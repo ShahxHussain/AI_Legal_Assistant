@@ -14,6 +14,12 @@ Track meaningful implementation changes in chronological order.
 
 ---
 
+- `[2026-06-11] [Step 6] Multilingual support (6 languages + auto-detect)`
+  - What changed: Extended `rag/language.py` to detect/enforce English, Urdu (script), Roman Urdu, Pashto, Punjabi (Shahmukhi), Sindhi, Balochi — script detection via distinctive Pashto/Sindhi characters, Roman detection via per-language keyword sets with Roman-Urdu margin rule. Added `language` override field to `/ask` (JSON) and `/analyze-document` (form). Generator methods accept `language` override. Prompts updated: language rules + disclaimer now cover all 7 reply languages. Flutter chat app bar got a language selector (Auto + 7 languages) passed with every request.
+  - Why changed: Assistant must serve citizens in all major Pakistani languages; Punjabi/Balochi script is visually identical to Urdu so a manual selector complements auto-detection.
+  - Impact: One chat face, auto-detect by default; users can force any supported language. Reply language is enforced via mandatory system rule + user-message instruction.
+  - Related test(s): Inline detection test — English/Roman Urdu/Urdu script/Sindhi script/Pashto script/Roman Punjabi all detected correctly; overrides honored.
+
 - `[2026-06-10] [Step -] Initial tracker setup`
   - What changed: Created `progress-updates/` folder with `CHANGE_LOG.md`, `DAILY_UPDATES.md`, and `STATUS_TRACKER.md`.
   - Why changed: To keep execution updates structured and visible across the hackathon build.

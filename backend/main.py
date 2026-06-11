@@ -8,8 +8,16 @@ from config import settings
 from rag.document_parser import extract_document_text
 from rag.embedder import Embedder
 from rag.generator import Generator
+from rag.language import SUPPORTED_LANGUAGES, detect_response_language
 from rag.query_intent import is_conversational_query, is_legal_query
 from rag.retriever import Retriever
+
+
+def _language_override(value: str) -> str | None:
+    lang = (value or "auto").strip().lower()
+    if lang in SUPPORTED_LANGUAGES and lang != "auto":
+        return lang
+    return None
 
 embedder: Embedder | None = None
 retriever: Retriever | None = None
@@ -52,6 +60,7 @@ app.add_middleware(
 
 class AskRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000)
+    language: str = Field(default="auto", max_length=20)
 
 
 class SourceItem(BaseModel):
@@ -111,23 +120,30 @@ def ask(body: AskRequest) -> AskResponse:
         )
 
     _ensure_llm_ready()
+    lang = _language_override(body.language)
 
     if is_conversational_query(question):
-        answer = generator.generate_conversational(question)
+        answer = generator.generate_conversational(question, language=lang)
         return AskResponse(
             answer=answer,
             sources=[],
             disclaimer=settings.disclaimer,
         )
 
-    chunks = retriever.retrieve(question)
+    # The FAISS index is English-only; translate non-English queries first
+    # so retrieval can find the right PPC/CrPC sections.
+    search_query = question
+    if detect_response_language(question) != "english":
+        search_query = generator.translate_query(question)
+
+    chunks = retriever.retrieve(search_query)
     if not chunks:
         raise HTTPException(
             status_code=503,
             detail="No relevant legal sources found for this question",
         )
 
-    answer = generator.generate(question, chunks)
+    answer = generator.generate(question, chunks, language=lang)
     cited = [c for c in chunks if c.score >= settings.source_min_score]
     sources = [SourceItem(**c.to_source_dict()) for c in cited]
 
@@ -142,6 +158,7 @@ def ask(body: AskRequest) -> AskResponse:
 async def analyze_document(
     file: UploadFile = File(...),
     question: str = Form(default=""),
+    language: str = Form(default="auto"),
 ) -> AskResponse:
     """
     Upload a PDF or TXT document for legal information analysis.
@@ -166,7 +183,10 @@ async def analyze_document(
         and retriever is not None
         and retriever.is_loaded
     ):
-        retrieved = retriever.retrieve(q)
+        search_q = q
+        if detect_response_language(q) != "english":
+            search_q = generator.translate_query(q)
+        retrieved = retriever.retrieve(search_q)
         rag_chunks = [c for c in retrieved if c.score >= settings.source_min_score]
 
     answer = generator.generate_document_analysis(
@@ -174,6 +194,7 @@ async def analyze_document(
         filename=file.filename,
         question=q or None,
         rag_chunks=rag_chunks or None,
+        language=_language_override(language),
     )
 
     preview = doc_text[:280].strip()

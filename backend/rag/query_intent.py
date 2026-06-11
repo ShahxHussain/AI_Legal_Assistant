@@ -55,6 +55,15 @@ _LEGAL_SIGNALS: set[str] = {
     "vakeel",
 }
 
+# Legal keywords in Urdu / Pashto / Sindhi / Punjabi script (Arabic-derived)
+_LEGAL_SIGNALS_SCRIPT = re.compile(
+    r"چوری|ضمانت|گرفتار|قتل|پولیس|عدالت|دفعہ|دفعه|وکیل|مقدمہ|مقدمه|سزا|جرم|"
+    r"قانون|تفتیش|تحقیقات|تھانہ|تھانے|ایف\s*آئی\s*آر|شکایت|ملزم|جیل|حراست|"
+    r"وارنٹ|ڈکیتی|دھوکہ|فراڈ|اغوا|تعزیرات|ضابطہ|فوجداری|انصاف|حقوق"
+)
+
+_ARABIC_SCRIPT = re.compile(r"[\u0600-\u06FF]")
+
 _CONVERSATIONAL_PATTERNS: list[re.Pattern[str]] = [
     re.compile(p, re.I)
     for p in (
@@ -78,6 +87,8 @@ _CONVERSATIONAL_PATTERNS: list[re.Pattern[str]] = [
         r"\b(wah|waah|great|awesome|nice|good)\s+(job|bot|app|assistant)\b",
         r"\baap\s+(tw|toh|tau|bhi)?\s*(tez|fast|achhay|achhe)\b",
         r"\b(zabardast|kamaal|kamal|shandar)\b",
+        r"^(سلام|السلام|آداب|ہیلو|ہائے)",
+        r"شکریہ|مہربانی",
     )
 ]
 
@@ -102,6 +113,9 @@ def is_legal_query(query: str) -> bool:
     if _has_legal_topic_trigger(query):
         return True
 
+    if _LEGAL_SIGNALS_SCRIPT.search(query):
+        return True
+
     words = set(re.findall(r"[a-z0-9]+", q))
     if words & _LEGAL_SIGNALS:
         return True
@@ -118,7 +132,13 @@ def is_conversational_query(query: str) -> bool:
     if any(pat.search(q) for pat in _CONVERSATIONAL_PATTERNS):
         return True
 
-    # Short casual messages without legal terms (compliments, small talk)
+    # Short casual messages without legal terms (compliments, small talk).
+    # Skip this heuristic for Arabic-script text — our legal-keyword coverage
+    # there is thin, so short Urdu/Pashto/Sindhi questions could be real
+    # legal queries that we'd wrongly treat as small talk.
+    if _ARABIC_SCRIPT.search(q):
+        return False
+
     word_count = len(q.split())
     if word_count <= 10:
         return True

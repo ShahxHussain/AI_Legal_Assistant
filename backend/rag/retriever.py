@@ -65,22 +65,25 @@ def _section_body_score(section_hints: set[str], text: str) -> float:
     return best
 
 
-def _preferred_document(terms: set[str], section_hints: set[str]) -> str | None:
+def _preferred_documents(terms: set[str], section_hints: set[str]) -> set[str]:
+    """All statutes relevant to the query — multi-topic questions (e.g. theft
+    offence + FIR procedure) legitimately span both PPC and CrPC."""
+    prefs: set[str] = set()
     if "fir" in terms or "154" in section_hints:
-        return "criminal_procedure"
+        prefs.add("criminal_procedure")
     if "bail" in terms or {"496", "497", "498"} & section_hints:
-        return "criminal_procedure"
+        prefs.add("criminal_procedure")
     if any(t in terms for t in ("arrest", "warrant", "custody", "girftari")):
-        return "criminal_procedure"
+        prefs.add("criminal_procedure")
     if any(t in terms for t in ("302", "379", "420", "ppc", "penal", "theft", "murder", "qatl")):
-        return "penal"
-    return None
+        prefs.add("penal")
+    return prefs
 
 
 def _direct_section_hits(
     chunks: list[dict],
     section_hints: set[str],
-    prefer_doc: str | None,
+    prefer_docs: set[str],
 ) -> list[tuple[int, float]]:
     """Scan index for chunks that contain the actual section statute text."""
     if not section_hints:
@@ -90,7 +93,7 @@ def _direct_section_hits(
     for idx, chunk in enumerate(chunks):
         text = chunk.get("text", "")
         document = chunk.get("document", "").lower()
-        if prefer_doc and prefer_doc not in document:
+        if prefer_docs and not any(p in document for p in prefer_docs):
             continue
 
         body_score = _section_body_score(section_hints, text)
@@ -187,7 +190,7 @@ class Retriever:
         k = top_k or settings.top_k
         analysis = analyze_query(query)
         search_query = analysis["expanded_query"]
-        prefer_doc = _preferred_document(
+        prefer_docs = _preferred_documents(
             analysis["terms"], analysis["section_hints"]
         )
 
@@ -228,7 +231,7 @@ class Retriever:
 
         # Inject chunks that contain the actual statute text for hinted sections
         for idx, direct_score in _direct_section_hits(
-            self.chunks, analysis["section_hints"], prefer_doc
+            self.chunks, analysis["section_hints"], prefer_docs
         ):
             if idx in seen_indices:
                 for i, (score, chunk, faiss_score) in enumerate(ranked):
