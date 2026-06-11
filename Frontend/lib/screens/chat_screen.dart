@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../config/api_config.dart';
 import '../models/chat_message.dart';
+import '../models/legal_source.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/chat_bubble.dart';
@@ -115,35 +116,39 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
 
     try {
-      final response = file != null
-          ? await _api.analyzeDocument(
-              bytes: file.bytes!,
-              filename: file.name,
-              question: text.isEmpty ? null : text,
-              language: _language,
-            )
-          : await _api.ask(text, language: _language);
+      if (file != null) {
+        // Document analysis stays non-streaming
+        final response = await _api.analyzeDocument(
+          bytes: file.bytes!,
+          filename: file.name,
+          question: text.isEmpty ? null : text,
+          language: _language,
+        );
 
-      if (!mounted) return;
-      setState(() {
-        final idx = _messages.indexWhere((m) => m.id == loadingId);
-        if (idx != -1) {
-          _messages[idx] = ChatMessage(
-            id: answerId,
-            role: MessageRole.assistant,
-            text: response.answer,
-            sources: List.from(response.sources),
-            disclaimer: response.disclaimer,
-          );
-        }
-        _isSending = false;
-        _apiHealthy = true;
-      });
+        if (!mounted) return;
+        setState(() {
+          final idx = _messages.indexWhere((m) => m.id == loadingId);
+          if (idx != -1) {
+            _messages[idx] = ChatMessage(
+              id: answerId,
+              role: MessageRole.assistant,
+              text: response.answer,
+              sources: List.from(response.sources),
+              disclaimer: response.disclaimer,
+            );
+          }
+          _isSending = false;
+          _apiHealthy = true;
+        });
+      } else {
+        await _streamAnswer(text, loadingId, answerId);
+      }
     } on ApiException catch (e) {
-      _replaceLoadingWithError(loadingId, e.message);
+      _replaceLoadingWithError(loadingId, answerId, e.message);
     } catch (e) {
       _replaceLoadingWithError(
         loadingId,
+        answerId,
         'Could not reach the server.\n\n'
         'Backend URL: ${ApiConfig.baseUrl}\n\n'
         'Start backend: uvicorn main:app --host 0.0.0.0 --port 8000',
@@ -153,10 +158,87 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
   }
 
-  void _replaceLoadingWithError(String loadingId, String error) {
+  Future<void> _streamAnswer(
+    String text,
+    String loadingId,
+    String answerId,
+  ) async {
+    var answerText = '';
+    var sources = <LegalSource>[];
+    String? disclaimer;
+    var receivedDelta = false;
+
+    void updateBubble({bool done = false}) {
+      if (!mounted) return;
+      setState(() {
+        final idx = _messages.indexWhere(
+          (m) => m.id == loadingId || m.id == answerId,
+        );
+        if (idx != -1) {
+          _messages[idx] = ChatMessage(
+            id: answerId,
+            role: MessageRole.assistant,
+            text: answerText,
+            sources: done ? sources : const [],
+            disclaimer: done ? disclaimer : null,
+          );
+        }
+        if (done) {
+          _isSending = false;
+          _apiHealthy = true;
+        }
+      });
+    }
+
+    await for (final event
+        in _api.askStream(text, language: _language)) {
+      switch (event['type'] as String?) {
+        case 'meta':
+          final rawSources = event['sources'] as List<dynamic>? ?? [];
+          sources = [
+            for (var i = 0; i < rawSources.length; i++)
+              LegalSource.fromJson(
+                rawSources[i] as Map<String, dynamic>,
+                index: i + 1,
+              ),
+          ];
+          disclaimer = event['disclaimer'] as String?;
+        case 'delta':
+          answerText += event['text'] as String? ?? '';
+          receivedDelta = true;
+          updateBubble();
+          _scrollToBottom();
+        case 'done':
+          final finalAnswer = event['answer'] as String?;
+          if (finalAnswer != null && finalAnswer.isNotEmpty) {
+            answerText = finalAnswer;
+          }
+          updateBubble(done: true);
+        case 'error':
+          throw ApiException(
+            event['detail'] as String? ?? 'Streaming failed',
+          );
+      }
+    }
+
+    // Stream ended without a done event (connection dropped mid-answer)
+    if (_isSending && receivedDelta) {
+      updateBubble(done: true);
+    } else if (_isSending) {
+      throw ApiException('Connection lost before the answer arrived');
+    }
+  }
+
+  void _replaceLoadingWithError(
+    String loadingId,
+    String answerId,
+    String error,
+  ) {
     if (!mounted) return;
     setState(() {
-      final idx = _messages.indexWhere((m) => m.id == loadingId);
+      final idx = _messages.indexWhere(
+        (m) => m.id == loadingId || m.id == answerId,
+      );
       if (idx != -1) {
         _messages[idx] = ChatMessage(
           id: '${loadingId}_error',
@@ -415,40 +497,79 @@ class _ChatScreenState extends State<ChatScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                IconButton(
-                  onPressed: _isSending ? null : _pickDocument,
-                  tooltip: 'Attach PDF or TXT',
-                  icon: Icon(
-                    Icons.attach_file_rounded,
-                    color: _attachedFile != null
-                        ? AppColors.accent
-                        : AppColors.muted,
-                  ),
-                ),
                 Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    minLines: 1,
-                    maxLines: 5,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) {
-                      if (_canSend) _sendMessage();
-                    },
-                    onChanged: (_) => setState(() {}),
-                    style: GoogleFonts.inter(fontSize: 15),
-                    decoration: InputDecoration(
-                      hintText: _attachedFile != null
-                          ? 'Optional question about your document...'
-                          : 'Ask in English, Urdu, Pashto, Punjabi, Sindhi...',
-                      prefixIcon: Icon(
-                        Icons.chat_bubble_outline_rounded,
-                        color: AppColors.muted.withValues(alpha: 0.7),
-                        size: 20,
-                      ),
-                      prefixIconConstraints: const BoxConstraints(
-                        minWidth: 44,
-                        minHeight: 44,
-                      ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(26),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(6, 4, 12, 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _isSending ? null : _pickDocument,
+                              customBorder: const CircleBorder(),
+                              child: Tooltip(
+                                message: 'Attach PDF or TXT',
+                                child: Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: _attachedFile != null
+                                        ? AppColors.accentSoft
+                                        : AppColors.surface,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppColors.secondary
+                                          .withValues(alpha: 0.30),
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.attach_file_rounded,
+                                    size: 20,
+                                    color: _isSending
+                                        ? AppColors.muted
+                                        : AppColors.secondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            minLines: 1,
+                            maxLines: 5,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (_) {
+                              if (_canSend) _sendMessage();
+                            },
+                            onChanged: (_) => setState(() {}),
+                            style: GoogleFonts.inter(fontSize: 15),
+                            decoration: InputDecoration(
+                              hintText: _attachedFile != null
+                                  ? 'Optional question about your document...'
+                                  : 'Ask in English, Urdu, Pashto, Punjabi...',
+                              filled: false,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 11,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

@@ -1,7 +1,9 @@
+import json
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from config import settings
@@ -9,6 +11,7 @@ from rag.document_parser import extract_document_text
 from rag.embedder import Embedder
 from rag.generator import Generator
 from rag.language import SUPPORTED_LANGUAGES, detect_response_language
+from rag.output_guard import sanitize_llm_output
 from rag.query_intent import is_conversational_query, is_legal_query
 from rag.retriever import Retriever
 
@@ -151,6 +154,93 @@ def ask(body: AskRequest) -> AskResponse:
         answer=answer,
         sources=sources,
         disclaimer=settings.disclaimer,
+    )
+
+
+def _ndjson(obj: dict) -> str:
+    return json.dumps(obj, ensure_ascii=False) + "\n"
+
+
+@app.post("/ask/stream")
+def ask_stream(body: AskRequest) -> StreamingResponse:
+    """
+    Streaming version of /ask (NDJSON). Event order:
+      {"type": "meta", "sources": [...], "disclaimer": "..."}
+      {"type": "delta", "text": "..."}   (repeated)
+      {"type": "done", "answer": "<full sanitized answer>"}
+    On failure: {"type": "error", "detail": "..."}
+    """
+    question = body.question.strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="Question cannot be empty")
+
+    if retriever is None or not retriever.is_loaded:
+        raise HTTPException(
+            status_code=503,
+            detail=index_load_error or "Search index is not loaded",
+        )
+
+    _ensure_llm_ready()
+    lang = _language_override(body.language)
+
+    def event_stream():
+        try:
+            if is_conversational_query(question):
+                yield _ndjson(
+                    {
+                        "type": "meta",
+                        "sources": [],
+                        "disclaimer": settings.disclaimer,
+                    }
+                )
+                parts: list[str] = []
+                for delta in generator.generate_conversational_stream(
+                    question, language=lang
+                ):
+                    parts.append(delta)
+                    yield _ndjson({"type": "delta", "text": delta})
+                yield _ndjson(
+                    {"type": "done", "answer": sanitize_llm_output("".join(parts))}
+                )
+                return
+
+            search_query = question
+            if detect_response_language(question) != "english":
+                search_query = generator.translate_query(question)
+
+            chunks = retriever.retrieve(search_query)
+            if not chunks:
+                yield _ndjson(
+                    {
+                        "type": "error",
+                        "detail": "No relevant legal sources found for this question",
+                    }
+                )
+                return
+
+            cited = [c for c in chunks if c.score >= settings.source_min_score]
+            yield _ndjson(
+                {
+                    "type": "meta",
+                    "sources": [c.to_source_dict() for c in cited],
+                    "disclaimer": settings.disclaimer,
+                }
+            )
+
+            parts = []
+            for delta in generator.generate_stream(question, chunks, language=lang):
+                parts.append(delta)
+                yield _ndjson({"type": "delta", "text": delta})
+            yield _ndjson(
+                {"type": "done", "answer": sanitize_llm_output("".join(parts))}
+            )
+        except Exception as exc:  # surface mid-stream failures to the client
+            yield _ndjson({"type": "error", "detail": str(exc)})
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="application/x-ndjson",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 

@@ -29,5 +29,6 @@ class ApiConfig {
 
   static String get healthUrl => '$baseUrl/health';
   static String get askUrl => '$baseUrl/ask';
+  static String get askStreamUrl => '$baseUrl/ask/stream';
   static String get analyzeDocumentUrl => '$baseUrl/analyze-document';
 }

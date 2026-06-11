@@ -14,6 +14,12 @@ Track meaningful implementation changes in chronological order.
 
 ---
 
+- `[2026-06-11] [Step 6] Gemma 4 model switch + multilingual RAG fixes + clean UI remake`
+  - What changed: **Model:** `google/gemma-4-31B-it` (reasoning disabled via `reasoning_effort=none` for latency; budgets 3200/700; softer penalties 1.05/0.1; client timeout 90s + 2 retries). **RAG:** non-English queries now translated to English (8B Lite) before retrieval; multi-doc direct section hits (PPC + CrPC together); "150,000" no longer parsed as section 150; Urdu-script legal keywords in intent detection; TOP_K=8. **Output guard:** recognizes Urdu full stop "۔", preserves markdown line breaks. **UI:** clean light remake (Urdu Nastaliq greeting on Home, soft mint cards, no navy fills), language chips + response-language picker on Home (carries into chat), attach button redesigned inside unified input pill.
+  - Why changed: Urdu-script questions retrieved nothing (English-only embeddings) → "not enough info" replies; Gemma reasoning made replies slow/empty at old token budgets; user requested screenshot-matched clean UI.
+  - Impact: Full Urdu theft/FIR scenario now answers with PPC 379/380/381 + 448 and CrPC 154 step-by-step in proper Urdu with disclaimer; conversational replies in Urdu script verified; UI consistent with brand palette.
+  - Related test(s): `scripts/test_urdu_pipeline.py`, `scripts/test_reasoning_latency.py`, `flutter analyze` clean.
+
 - `[2026-06-11] [Step 6] Multilingual support (6 languages + auto-detect)`
   - What changed: Extended `rag/language.py` to detect/enforce English, Urdu (script), Roman Urdu, Pashto, Punjabi (Shahmukhi), Sindhi, Balochi — script detection via distinctive Pashto/Sindhi characters, Roman detection via per-language keyword sets with Roman-Urdu margin rule. Added `language` override field to `/ask` (JSON) and `/analyze-document` (form). Generator methods accept `language` override. Prompts updated: language rules + disclaimer now cover all 7 reply languages. Flutter chat app bar got a language selector (Auto + 7 languages) passed with every request.
   - Why changed: Assistant must serve citizens in all major Pakistani languages; Punjabi/Balochi script is visually identical to Urdu so a manual selector complements auto-detection.

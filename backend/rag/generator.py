@@ -100,12 +100,30 @@ class Generator:
         raw = response.choices[0].message.content or ""
         return sanitize_llm_output(raw)
 
-    def generate(
+    def _chat_stream(self, messages: list[dict], *, max_tokens: int):
+        """Yield raw text deltas from the LLM as they arrive."""
+        client = self._get_client()
+        response = client.chat.completions.create(
+            messages=messages,
+            max_tokens=max_tokens,
+            stream=True,
+            **self._completion_params(),
+        )
+        for part in response:
+            choices = getattr(part, "choices", None)
+            if not choices:
+                continue
+            delta = getattr(choices[0], "delta", None)
+            text = getattr(delta, "content", None) if delta else None
+            if text:
+                yield text
+
+    def _rag_messages(
         self,
         question: str,
         chunks: list[RetrievedChunk],
         language: str | None = None,
-    ) -> str:
+    ) -> list[dict]:
         context = build_context(chunks)
         lang = detect_response_language(question, override=language)
         lang_rule = language_system_rule(lang)
@@ -123,20 +141,39 @@ class Generator:
             "Give a clear, realistic answer. Address all parts of the question if it has multiple points."
         )
 
+        return [
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": user_message},
+        ]
+
+    def generate(
+        self,
+        question: str,
+        chunks: list[RetrievedChunk],
+        language: str | None = None,
+    ) -> str:
         return self._chat(
-            [
-                {"role": "system", "content": system_content},
-                {"role": "user", "content": user_message},
-            ],
+            self._rag_messages(question, chunks, language),
             max_tokens=settings.llm_max_tokens,
         )
 
-    def generate_conversational(
+    def generate_stream(
+        self,
+        question: str,
+        chunks: list[RetrievedChunk],
+        language: str | None = None,
+    ):
+        """Yield raw answer deltas; caller sanitizes the joined result."""
+        yield from self._chat_stream(
+            self._rag_messages(question, chunks, language),
+            max_tokens=settings.llm_max_tokens,
+        )
+
+    def _conversational_messages(
         self,
         question: str,
         language: str | None = None,
-    ) -> str:
-        """Reply to greetings / meta questions without RAG context or sources."""
+    ) -> list[dict]:
         lang = detect_response_language(question, override=language)
         lang_rule = language_system_rule(lang)
 
@@ -147,11 +184,29 @@ class Generator:
         )
         user_message = f"{question.strip()}\n\n{language_instruction(lang)}"
 
+        return [
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": user_message},
+        ]
+
+    def generate_conversational(
+        self,
+        question: str,
+        language: str | None = None,
+    ) -> str:
+        """Reply to greetings / meta questions without RAG context or sources."""
         return self._chat(
-            [
-                {"role": "system", "content": system_content},
-                {"role": "user", "content": user_message},
-            ],
+            self._conversational_messages(question, language),
+            max_tokens=settings.llm_conversational_max_tokens,
+        )
+
+    def generate_conversational_stream(
+        self,
+        question: str,
+        language: str | None = None,
+    ):
+        yield from self._chat_stream(
+            self._conversational_messages(question, language),
             max_tokens=settings.llm_conversational_max_tokens,
         )
 

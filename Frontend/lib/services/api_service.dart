@@ -29,6 +29,41 @@ class ApiService {
     return json['index_loaded'] == true;
   }
 
+  /// Streams NDJSON events from POST /ask/stream:
+  /// {"type":"meta"|"delta"|"done"|"error", ...}
+  Stream<Map<String, dynamic>> askStream(
+    String question, {
+    String language = 'auto',
+  }) async* {
+    final request = http.Request('POST', Uri.parse(ApiConfig.askStreamUrl))
+      ..headers['Content-Type'] = 'application/json'
+      ..body = jsonEncode({'question': question, 'language': language});
+
+    final response =
+        await _client.send(request).timeout(const Duration(seconds: 30));
+
+    if (response.statusCode != 200) {
+      final body = await response.stream.bytesToString();
+      String detail = 'Request failed (${response.statusCode})';
+      try {
+        final json = jsonDecode(body);
+        if (json is Map<String, dynamic>) {
+          detail = json['detail']?.toString() ?? detail;
+        }
+      } catch (_) {}
+      throw ApiException(detail, statusCode: response.statusCode);
+    }
+
+    final lines = response.stream
+        .transform(utf8.decoder)
+        .transform(const LineSplitter());
+
+    await for (final line in lines) {
+      if (line.trim().isEmpty) continue;
+      yield jsonDecode(line) as Map<String, dynamic>;
+    }
+  }
+
   Future<AskResponse> ask(String question, {String language = 'auto'}) async {
     final response = await _client
         .post(
