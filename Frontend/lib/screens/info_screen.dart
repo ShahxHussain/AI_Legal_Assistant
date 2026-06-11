@@ -55,13 +55,16 @@ class InfoScreen extends StatelessWidget {
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_rounded),
-          color: AppColors.primary,
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            foregroundColor: AppColors.textDark,
+          ),
         ),
         title: Text(
-          'Info',
+          'About Court Companion',
           style: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w700,
-            color: AppColors.primary,
+            color: AppColors.textDark,
           ),
         ),
         bottom: PreferredSize(
@@ -75,6 +78,51 @@ class InfoScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const CourtCompanionInfoCard(),
+            const SizedBox(height: 24),
+            Text(
+              'Languages',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const LanguageChips(),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.accentSoft.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppColors.secondary.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.translate_rounded,
+                    size: 20,
+                    color: AppColors.secondary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Your language is detected automatically and the reply '
+                      'comes back in the same language. You can also pick a '
+                      'language from the selector at the top of the chat.',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        height: 1.5,
+                        color: AppColors.textDark.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
             Text(
               'Legal sources',
@@ -120,38 +168,6 @@ class InfoScreen extends StatelessWidget {
                   subtitle: t.$2,
                   icon: t.$3,
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.accentSoft.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: AppColors.accent.withValues(alpha: 0.35),
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.translate_rounded,
-                    size: 20,
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Ask in **English** or **Roman Urdu** — the assistant replies in the same language you use.',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        height: 1.5,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ),
           ],

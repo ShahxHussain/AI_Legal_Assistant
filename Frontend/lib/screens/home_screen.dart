@@ -2,16 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/court_companion_info_card.dart';
+import '../widgets/language_picker.dart';
 import 'chat_screen.dart';
 import 'info_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _language = 'auto';
 
   void _openChat(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute<void>(builder: (_) => const ChatScreen()),
+      MaterialPageRoute<void>(
+        builder: (_) => ChatScreen(initialLanguage: _language),
+      ),
     );
   }
 
@@ -68,7 +79,30 @@ class HomeScreen extends StatelessWidget {
                         height: 1.45,
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 18),
+                    const LanguageChips(centered: true),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Response language:',
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        LanguagePicker(
+                          value: _language,
+                          compact: false,
+                          onChanged: (value) =>
+                              setState(() => _language = value),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 26),
                     _OptionCard(
                       icon: Icons.chat_bubble_rounded,
                       title: 'Type your question',

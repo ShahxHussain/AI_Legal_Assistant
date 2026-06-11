@@ -7,9 +7,12 @@ import '../models/chat_message.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/chat_bubble.dart';
+import '../widgets/language_picker.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({super.key, this.initialLanguage = 'auto'});
+
+  final String initialLanguage;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -25,17 +28,6 @@ class _ChatScreenState extends State<ChatScreen> {
   PlatformFile? _attachedFile;
   String _language = 'auto';
 
-  static const _languages = <(String, String)>[
-    ('auto', 'Auto-detect'),
-    ('english', 'English'),
-    ('urdu_script', 'اردو (Urdu)'),
-    ('roman_urdu', 'Roman Urdu'),
-    ('pashto', 'پښتو (Pashto)'),
-    ('punjabi', 'پنجابی (Punjabi)'),
-    ('sindhi', 'سنڌي (Sindhi)'),
-    ('balochi', 'بلوچی (Balochi)'),
-  ];
-
   static const _suggestions = [
     ('What is an FIR?', Icons.description_outlined),
     ('What are my rights after arrest?', Icons.shield_outlined),
@@ -46,6 +38,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    _language = widget.initialLanguage;
     _checkApiHealth();
   }
 
@@ -292,67 +285,12 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildLanguageSelector() {
-    final current = _languages.firstWhere(
-      (l) => l.$1 == _language,
-      orElse: () => _languages.first,
-    );
-    return PopupMenuButton<String>(
-      tooltip: 'Response language',
-      initialValue: _language,
-      onSelected: (value) => setState(() => _language = value),
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      itemBuilder: (context) => _languages.map((l) {
-        final selected = l.$1 == _language;
-        return PopupMenuItem<String>(
-          value: l.$1,
-          child: Row(
-            children: [
-              Icon(
-                selected
-                    ? Icons.radio_button_checked_rounded
-                    : Icons.radio_button_off_rounded,
-                size: 18,
-                color: selected ? AppColors.accent : AppColors.muted,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                l.$2,
-                style: GoogleFonts.inter(
-                  fontSize: 13.5,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.translate_rounded,
-                size: 15, color: AppColors.secondary),
-            const SizedBox(width: 5),
-            Text(
-              _language == 'auto' ? 'Auto' : current.$2,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-              ),
-            ),
-            const Icon(Icons.expand_more_rounded,
-                size: 15, color: AppColors.muted),
-          ],
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Center(
+        child: LanguagePicker(
+          value: _language,
+          onChanged: (value) => setState(() => _language = value),
         ),
       ),
     );
