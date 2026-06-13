@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Court Companion needs microphone access so you can ask legal questions by voice.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Court Companion uses speech recognition to understand your legal questions.</string>
 </dict>
 </plist>

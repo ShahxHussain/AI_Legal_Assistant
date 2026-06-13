@@ -4,9 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../config/api_config.dart';
 import '../models/chat_message.dart';
-import '../models/legal_source.dart';
 import '../services/api_service.dart';
+import '../services/assistant_stream.dart';
 import '../theme/app_theme.dart';
+import '../widgets/api_status_badge.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/language_picker.dart';
 
@@ -163,70 +164,45 @@ class _ChatScreenState extends State<ChatScreen> {
     String loadingId,
     String answerId,
   ) async {
-    var answerText = '';
-    var sources = <LegalSource>[];
-    String? disclaimer;
-    var receivedDelta = false;
-
-    void updateBubble({bool done = false}) {
-      if (!mounted) return;
-      setState(() {
-        final idx = _messages.indexWhere(
-          (m) => m.id == loadingId || m.id == answerId,
-        );
-        if (idx != -1) {
-          _messages[idx] = ChatMessage(
-            id: answerId,
-            role: MessageRole.assistant,
-            text: answerText,
-            sources: done ? sources : const [],
-            disclaimer: done ? disclaimer : null,
+    final result = await streamAssistantAnswer(
+      _api,
+      question: text,
+      language: _language,
+      onPartial: (partial) {
+        if (!mounted) return;
+        setState(() {
+          final idx = _messages.indexWhere(
+            (m) => m.id == loadingId || m.id == answerId,
           );
-        }
-        if (done) {
-          _isSending = false;
-          _apiHealthy = true;
-        }
-      });
-    }
-
-    await for (final event
-        in _api.askStream(text, language: _language)) {
-      switch (event['type'] as String?) {
-        case 'meta':
-          final rawSources = event['sources'] as List<dynamic>? ?? [];
-          sources = [
-            for (var i = 0; i < rawSources.length; i++)
-              LegalSource.fromJson(
-                rawSources[i] as Map<String, dynamic>,
-                index: i + 1,
-              ),
-          ];
-          disclaimer = event['disclaimer'] as String?;
-        case 'delta':
-          answerText += event['text'] as String? ?? '';
-          receivedDelta = true;
-          updateBubble();
-          _scrollToBottom();
-        case 'done':
-          final finalAnswer = event['answer'] as String?;
-          if (finalAnswer != null && finalAnswer.isNotEmpty) {
-            answerText = finalAnswer;
+          if (idx != -1) {
+            _messages[idx] = ChatMessage(
+              id: answerId,
+              role: MessageRole.assistant,
+              text: partial,
+            );
           }
-          updateBubble(done: true);
-        case 'error':
-          throw ApiException(
-            event['detail'] as String? ?? 'Streaming failed',
-          );
-      }
-    }
+        });
+        _scrollToBottom();
+      },
+    );
 
-    // Stream ended without a done event (connection dropped mid-answer)
-    if (_isSending && receivedDelta) {
-      updateBubble(done: true);
-    } else if (_isSending) {
-      throw ApiException('Connection lost before the answer arrived');
-    }
+    if (!mounted) return;
+    setState(() {
+      final idx = _messages.indexWhere(
+        (m) => m.id == loadingId || m.id == answerId,
+      );
+      if (idx != -1) {
+        _messages[idx] = ChatMessage(
+          id: answerId,
+          role: MessageRole.assistant,
+          text: result.answer,
+          sources: List.from(result.sources),
+          disclaimer: result.disclaimer,
+        );
+      }
+      _isSending = false;
+      _apiHealthy = true;
+    });
   }
 
   void _replaceLoadingWithError(
@@ -355,7 +331,7 @@ class _ChatScreenState extends State<ChatScreen> {
           message: ApiConfig.baseUrl,
           child: Padding(
             padding: const EdgeInsets.only(right: 16),
-            child: _ApiStatusBadge(healthy: _apiHealthy),
+            child: ApiStatusBadge(healthy: _apiHealthy),
           ),
         ),
       ],
@@ -646,86 +622,6 @@ class _ChatScreenState extends State<ChatScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _ApiStatusBadge extends StatelessWidget {
-  const _ApiStatusBadge({required this.healthy});
-
-  final bool? healthy;
-
-  @override
-  Widget build(BuildContext context) {
-    if (healthy == null) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.muted.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Connecting',
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.muted,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final online = healthy == true;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: online
-            ? AppColors.success.withValues(alpha: 0.1)
-            : AppColors.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: online
-              ? AppColors.success.withValues(alpha: 0.3)
-              : AppColors.error.withValues(alpha: 0.25),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(
-              color: online ? AppColors.success : AppColors.error,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            online ? 'Online' : 'Offline',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: online ? AppColors.success : AppColors.error,
-            ),
-          ),
-        ],
       ),
     );
   }

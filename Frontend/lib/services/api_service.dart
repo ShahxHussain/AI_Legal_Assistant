@@ -40,7 +40,7 @@ class ApiService {
       ..body = jsonEncode({'question': question, 'language': language});
 
     final response =
-        await _client.send(request).timeout(const Duration(seconds: 30));
+        await _client.send(request).timeout(const Duration(seconds: 120));
 
     if (response.statusCode != 200) {
       final body = await response.stream.bytesToString();

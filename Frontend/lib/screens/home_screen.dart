@@ -6,6 +6,8 @@ import '../widgets/court_companion_info_card.dart';
 import '../widgets/language_picker.dart';
 import 'chat_screen.dart';
 import 'info_screen.dart';
+import 'voice_screen.dart';
+import '../widgets/voice_language_picker.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,6 +24,15 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute<void>(
         builder: (_) => ChatScreen(initialLanguage: _language),
+      ),
+    );
+  }
+
+  void _openVoice(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => const VoiceScreen(initialLanguage: kVoiceDefaultLanguage),
       ),
     );
   }
@@ -107,6 +118,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: 'Type your question',
                       subtitle: 'Ask in text',
                       onTap: () => _openChat(context),
+                    ),
+                    const SizedBox(height: 14),
+                    _OptionCard(
+                      icon: Icons.mic_rounded,
+                      title: 'Ask by voice',
+                      subtitle: 'Speak your question · English',
+                      onTap: () => _openVoice(context),
                     ),
                     const SizedBox(height: 14),
                     _OptionCard(
