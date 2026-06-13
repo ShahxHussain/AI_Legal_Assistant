@@ -34,10 +34,15 @@ class ApiService {
   Stream<Map<String, dynamic>> askStream(
     String question, {
     String language = 'urdu_script',
+    bool voiceMode = false,
   }) async* {
     final request = http.Request('POST', Uri.parse(ApiConfig.askStreamUrl))
       ..headers['Content-Type'] = 'application/json'
-      ..body = jsonEncode({'question': question, 'language': language});
+      ..body = jsonEncode({
+        'question': question,
+        'language': language,
+        'voice_mode': voiceMode,
+      });
 
     final response =
         await _client.send(request).timeout(const Duration(seconds: 120));

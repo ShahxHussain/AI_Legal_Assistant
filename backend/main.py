@@ -69,6 +69,7 @@ app.add_middleware(
 class AskRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000)
     language: str = Field(default=DEFAULT_LANGUAGE, max_length=20)
+    voice_mode: bool = False
 
 
 class SourceItem(BaseModel):
@@ -131,7 +132,9 @@ def ask(body: AskRequest) -> AskResponse:
     lang = _language_override(body.language)
 
     if is_conversational_query(question):
-        answer = generator.generate_conversational(question, language=lang)
+        answer = generator.generate_conversational(
+            question, language=lang, voice_mode=body.voice_mode
+        )
         return AskResponse(
             answer=answer,
             sources=[],
@@ -151,7 +154,9 @@ def ask(body: AskRequest) -> AskResponse:
             detail="No relevant legal sources found for this question",
         )
 
-    answer = generator.generate(question, chunks, language=lang)
+    answer = generator.generate(
+        question, chunks, language=lang, voice_mode=body.voice_mode
+    )
     cited = [c for c in chunks if c.score >= settings.source_min_score]
     sources = [SourceItem(**c.to_source_dict()) for c in cited]
 
@@ -200,7 +205,7 @@ def ask_stream(body: AskRequest) -> StreamingResponse:
                 )
                 parts: list[str] = []
                 for delta in generator.generate_conversational_stream(
-                    question, language=lang
+                    question, language=lang, voice_mode=body.voice_mode
                 ):
                     parts.append(delta)
                     yield _ndjson({"type": "delta", "text": delta})
@@ -233,7 +238,9 @@ def ask_stream(body: AskRequest) -> StreamingResponse:
             )
 
             parts = []
-            for delta in generator.generate_stream(question, chunks, language=lang):
+            for delta in generator.generate_stream(
+                question, chunks, language=lang, voice_mode=body.voice_mode
+            ):
                 parts.append(delta)
                 yield _ndjson({"type": "delta", "text": delta})
             yield _ndjson(

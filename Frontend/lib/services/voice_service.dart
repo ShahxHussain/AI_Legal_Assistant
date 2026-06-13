@@ -26,6 +26,11 @@ class VoiceService {
   bool _sttReady = false;
   bool _ttsReady = false;
   String? _lastHint;
+  bool _keepListening = false;
+  bool _resuming = false;
+  String _dictationBuffer = '';
+  void Function(String text, bool isFinal)? _wordsHandler;
+  String _localeId = 'en_US';
 
   bool get isSttReady => _sttReady;
   bool get isTtsReady => _ttsReady;
@@ -53,11 +58,14 @@ class VoiceService {
     try {
       _sttReady = await _stt.initialize(
         onError: (_) {},
-        onStatus: (_) {},
+        onStatus: _onSttStatus,
       );
 
       if (!_sttReady && requestPermission) {
-        _sttReady = await _stt.initialize();
+        _sttReady = await _stt.initialize(
+          onError: (_) {},
+          onStatus: _onSttStatus,
+        );
       }
 
       if (!_sttReady && requestPermission) {
@@ -93,26 +101,62 @@ class VoiceService {
     );
   }
 
+  void _onSttStatus(String status) {
+    if (!_keepListening || _wordsHandler == null) return;
+    final s = status.toLowerCase();
+    if (!s.contains('done') && !s.contains('notlistening')) return;
+    _scheduleResume();
+  }
+
+  Future<void> _scheduleResume() async {
+    if (!_keepListening || _resuming || _wordsHandler == null) return;
+    _resuming = true;
+    try {
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      if (!_keepListening || _stt.isListening || _wordsHandler == null) return;
+      await _beginListen();
+    } finally {
+      _resuming = false;
+    }
+  }
+
   Future<void> startListening({
     required void Function(String text, bool isFinal) onWords,
     String localeId = 'en_US',
   }) async {
-    if (_stt.isListening) return;
+    await stopListening();
 
     if (!_sttReady) {
       final result = await init(requestPermission: true);
       if (!result.sttReady) return;
     }
 
+    _wordsHandler = onWords;
+    _localeId = localeId;
+    _keepListening = true;
+    _dictationBuffer = '';
+
+    await _beginListen();
+  }
+
+  Future<void> _beginListen() async {
+    if (!_keepListening || _wordsHandler == null) return;
+
+    if (_stt.isListening) {
+      await _stt.stop();
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    }
+
+    final handler = _wordsHandler!;
     await _stt.listen(
       onResult: (SpeechRecognitionResult result) {
-        onWords(result.recognizedWords, result.finalResult);
+        handler(_mergeTranscript(result), result.finalResult);
       },
       listenOptions: SpeechListenOptions(
-        localeId: localeId,
+        localeId: _localeId,
         listenMode: ListenMode.dictation,
-        listenFor: const Duration(seconds: 60),
-        pauseFor: const Duration(seconds: 5),
+        listenFor: const Duration(minutes: 3),
+        pauseFor: const Duration(seconds: 15),
         partialResults: true,
         cancelOnError: false,
         onDevice: false,
@@ -120,7 +164,34 @@ class VoiceService {
     );
   }
 
+  String _mergeTranscript(SpeechRecognitionResult result) {
+    final segment = result.recognizedWords.trim();
+    if (segment.isEmpty) return _dictationBuffer;
+
+    if (_dictationBuffer.isEmpty) {
+      if (result.finalResult) _dictationBuffer = segment;
+      return segment;
+    }
+
+    if (segment.startsWith(_dictationBuffer)) {
+      if (result.finalResult) _dictationBuffer = segment;
+      return segment;
+    }
+
+    if (_dictationBuffer.startsWith(segment)) {
+      return _dictationBuffer;
+    }
+
+    final merged = '$_dictationBuffer $segment';
+    if (result.finalResult) {
+      _dictationBuffer = merged;
+    }
+    return merged;
+  }
+
   Future<void> stopListening() async {
+    _keepListening = false;
+    _wordsHandler = null;
     if (_stt.isListening) {
       await _stt.stop();
     }
@@ -178,6 +249,13 @@ class VoiceService {
     s = s.replaceAll(RegExp(r'^\d+\.\s*', multiLine: true), '');
     s = s.replaceAll(RegExp(r'^[-*•]\s+', multiLine: true), '');
 
+    s = s.replaceAllMapped(
+      RegExp(
+        r'Section\s+(\d+)\s+(?:of\s+)?(?:the\s+)?(?:PPC|CrPC)',
+        caseSensitive: false,
+      ),
+      (m) => 'section ${m.group(1)}',
+    );
     s = s.replaceAllMapped(
       RegExp(r'§\s*(\d+)'),
       (m) => 'section ${m.group(1)}',

@@ -18,6 +18,7 @@ Future<AssistantStreamResult> streamAssistantAnswer(
   ApiService api, {
   required String question,
   required String language,
+  bool voiceMode = false,
   void Function(String partial)? onPartial,
   void Function(List<LegalSource> sources, String? disclaimer)? onMeta,
 }) async {
@@ -26,7 +27,11 @@ Future<AssistantStreamResult> streamAssistantAnswer(
   String? disclaimer;
   var receivedDelta = false;
 
-  await for (final event in api.askStream(question, language: language)) {
+  await for (final event in api.askStream(
+    question,
+    language: language,
+    voiceMode: voiceMode,
+  )) {
     switch (event['type'] as String?) {
       case 'meta':
         final rawSources = event['sources'] as List<dynamic>? ?? [];

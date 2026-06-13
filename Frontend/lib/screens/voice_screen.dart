@@ -82,7 +82,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
         if (_liveTranscript.trim().isNotEmpty) {
           return 'Tap stop when you finish speaking';
         }
-        return 'Speak now — tap stop when done';
+        return 'Speak now — pauses up to 15s are OK. Tap stop when finished';
       case _VoicePhase.thinking:
         return _thinkingStatus;
       case _VoicePhase.speaking:
@@ -168,6 +168,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
         _api,
         question: question,
         language: _language,
+        voiceMode: true,
         onMeta: (sources, disclaimer) {
           if (!mounted) return;
           setState(() {
@@ -505,12 +506,14 @@ class _VoiceScreenState extends State<VoiceScreen> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontStyle: FontStyle.italic,
-                color: AppColors.muted,
+            child: SingleChildScrollView(
+              child: Text(
+                text,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                  color: AppColors.muted,
+                ),
               ),
             ),
           ),
@@ -640,25 +643,32 @@ class _VoiceScreenState extends State<VoiceScreen> {
             ),
             if (listening && _liveTranscript.trim().isNotEmpty) ...[
               const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AppColors.accentSoft.withValues(alpha: 0.45),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.secondary.withValues(alpha: 0.15),
-                  ),
-                ),
-                child: Text(
-                  _liveTranscript,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textDark,
-                    height: 1.4,
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 180),
+                child: SingleChildScrollView(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentSoft.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.secondary.withValues(alpha: 0.15),
+                      ),
+                    ),
+                    child: Text(
+                      _liveTranscript,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textDark,
+                        height: 1.4,
+                      ),
+                    ),
                   ),
                 ),
               ),

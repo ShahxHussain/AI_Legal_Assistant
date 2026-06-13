@@ -16,7 +16,8 @@ class PlatformTts {
     if (!_ready || text.trim().isEmpty) return;
     final utterance = web.SpeechSynthesisUtterance(text.trim());
     utterance.lang = 'en-US';
-    utterance.rate = 0.92;
+    utterance.rate = 1.0;
+    utterance.pitch = 1.02;
     web.window.speechSynthesis.speak(utterance);
   }
 

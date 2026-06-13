@@ -12,8 +12,8 @@ class PlatformTts {
   Future<bool> init() async {
     try {
       await _tts.setLanguage('en-US');
-      await _tts.setSpeechRate(0.46);
-      await _tts.setPitch(1.0);
+      await _tts.setSpeechRate(0.52);
+      await _tts.setPitch(1.05);
       await _tts.awaitSpeakCompletion(true);
       _ready = true;
       return true;

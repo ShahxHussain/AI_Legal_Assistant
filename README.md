@@ -28,6 +28,7 @@ An AI-powered legal assistant that helps Pakistani citizens understand laws, rig
   - [Implemented](#implemented)
   - [Planned](#planned)
 - [RAG Architecture](#rag-architecture)
+- [How the System Works](docs/LANGUAGE_AND_TRANSLATION.md) — full diagram + language pipelines (Devpost-ready)
 - [AI Models](#ai-models)
 - [Technology Stack](#technology-stack)
 - [Quick Start](#quick-start)
@@ -194,13 +195,15 @@ User Question
 
 ```text
 User Query (any of 7 languages)
-    → Translate to English if needed (for search)
-    → Query Embedding
+    → IF question text is not English: translate_query() → English search string
+    → Query Embedding (all-MiniLM-L6-v2 — English vectors)
     → FAISS Hybrid Search (TOP_K=8)
-    → Context Assembly
-    → LLM Response (user's chosen language)
+    → English statute chunks retrieved
+    → LLM generates answer in user's chosen language (app picker)
     → Output guard + disclaimer
 ```
+
+> **Deep dive:** [docs/LANGUAGE_AND_TRANSLATION.md](docs/LANGUAGE_AND_TRANSLATION.md) explains how search translation and response language work separately — including detection rules, models, and worked examples.
 
 ---
 
@@ -208,9 +211,9 @@ User Query (any of 7 languages)
 
 | Layer | Model | Provider | Purpose |
 |-------|-------|----------|---------|
-| **Answers** | `google/gemma-4-31B-it` | Together.ai | Legal explanation from retrieved context |
-| **Translation** | `meta-llama/Meta-Llama-3-8B-Instruct-Lite` | Together.ai | Non-English query → English for retrieval |
-| **Embeddings** | `all-MiniLM-L6-v2` | sentence-transformers | Semantic search over statute chunks |
+| **Search translation** | `meta-llama/Meta-Llama-3-8B-Instruct-Lite` | Together.ai | Non-English question → English for FAISS |
+| **Answers** | `google/gemma-4-31B-it` | Together.ai | Explain English sources in user's language |
+| **Embeddings** | `all-MiniLM-L6-v2` | sentence-transformers | English semantic search |
 
 *Models are under active evaluation for quality, latency, and cost at civic scale.*
 

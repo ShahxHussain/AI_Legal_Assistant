@@ -7,7 +7,12 @@ from rag.language import (
     language_system_rule,
 )
 from rag.output_guard import sanitize_llm_output
-from rag.prompts import CONVERSATIONAL_PROMPT, DOCUMENT_ANALYSIS_PROMPT, SYSTEM_PROMPT
+from rag.prompts import (
+    CONVERSATIONAL_PROMPT,
+    DOCUMENT_ANALYSIS_PROMPT,
+    SYSTEM_PROMPT,
+    VOICE_REPLY_APPEND,
+)
 from rag.retriever import RetrievedChunk
 
 
@@ -123,6 +128,8 @@ class Generator:
         question: str,
         chunks: list[RetrievedChunk],
         language: str | None = None,
+        *,
+        voice_mode: bool = False,
     ) -> list[dict]:
         context = build_context(chunks)
         lang = detect_response_language(question, override=language)
@@ -134,11 +141,17 @@ class Generator:
             + "CRITICAL: Never repeat the same phrase or sentence. "
             "If you finish the answer, stop immediately. No loops.\n"
         )
+        if voice_mode:
+            system_content += VOICE_REPLY_APPEND
 
         user_message = (
             f"{question.strip()}\n\n"
             f"{language_instruction(lang)}\n"
-            "Give a clear, realistic answer. Address all parts of the question if it has multiple points."
+            + (
+                "Give a clear spoken-style answer the user will hear aloud."
+                if voice_mode
+                else "Give a clear, realistic answer. Address all parts of the question if it has multiple points."
+            )
         )
 
         return [
@@ -151,9 +164,11 @@ class Generator:
         question: str,
         chunks: list[RetrievedChunk],
         language: str | None = None,
+        *,
+        voice_mode: bool = False,
     ) -> str:
         return self._chat(
-            self._rag_messages(question, chunks, language),
+            self._rag_messages(question, chunks, language, voice_mode=voice_mode),
             max_tokens=settings.llm_max_tokens,
         )
 
@@ -162,10 +177,12 @@ class Generator:
         question: str,
         chunks: list[RetrievedChunk],
         language: str | None = None,
+        *,
+        voice_mode: bool = False,
     ):
         """Yield raw answer deltas; caller sanitizes the joined result."""
         yield from self._chat_stream(
-            self._rag_messages(question, chunks, language),
+            self._rag_messages(question, chunks, language, voice_mode=voice_mode),
             max_tokens=settings.llm_max_tokens,
         )
 
@@ -173,6 +190,8 @@ class Generator:
         self,
         question: str,
         language: str | None = None,
+        *,
+        voice_mode: bool = False,
     ) -> list[dict]:
         lang = detect_response_language(question, override=language)
         lang_rule = language_system_rule(lang)
@@ -182,6 +201,8 @@ class Generator:
             + f"\n\n---\n## {lang_rule}\n"
             + "CRITICAL: Keep the reply short. Never repeat words or phrases.\n"
         )
+        if voice_mode:
+            system_content += VOICE_REPLY_APPEND
         user_message = f"{question.strip()}\n\n{language_instruction(lang)}"
 
         return [
@@ -193,10 +214,12 @@ class Generator:
         self,
         question: str,
         language: str | None = None,
+        *,
+        voice_mode: bool = False,
     ) -> str:
         """Reply to greetings / meta questions without RAG context or sources."""
         return self._chat(
-            self._conversational_messages(question, language),
+            self._conversational_messages(question, language, voice_mode=voice_mode),
             max_tokens=settings.llm_conversational_max_tokens,
         )
 
@@ -204,9 +227,11 @@ class Generator:
         self,
         question: str,
         language: str | None = None,
+        *,
+        voice_mode: bool = False,
     ):
         yield from self._chat_stream(
-            self._conversational_messages(question, language),
+            self._conversational_messages(question, language, voice_mode=voice_mode),
             max_tokens=settings.llm_conversational_max_tokens,
         )
 
