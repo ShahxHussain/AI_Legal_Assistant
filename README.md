@@ -1,8 +1,20 @@
-# Court Companion – AI Legal Assistant
+![Court Companion — AI Legal Multilingual Assistant for Pakistan](assets/images/Cover.png)
 
-An AI-powered legal information platform that improves access to legal knowledge for citizens in Pakistan. Users can ask legal questions in natural language (text or voice) and receive simplified, contextually relevant answers grounded in Pakistan's legal framework.
+# Court Companion | AI Legal Multilingual Assistant
+
+**Know Your Rights. In Your Language.**
+
+An AI-powered legal assistant that helps Pakistani citizens understand laws, rights, procedures, FIRs, bail, and criminal statutes through **verified legal sources** — via **text** or **voice**.
 
 > **Disclaimer:** Court Companion is an informational legal guide. It does not provide legal representation and does not replace professional legal counsel.
+
+| | |
+|---|---|
+| **7 Languages** | English · Urdu · Roman Urdu · Pashto · Punjabi · Sindhi · Balochi |
+| **Legal corpus** | PPC + CrPC + ATA — **983 indexed chunks** |
+| **Platforms** | Android APK + Web |
+| **Modes** | Text chat + Voice assistant (English voice; more languages coming) |
+| **Live API** | [ai-legal-assistant-fes8.onrender.com](https://ai-legal-assistant-fes8.onrender.com/health) |
 
 ---
 
@@ -13,12 +25,12 @@ An AI-powered legal information platform that improves access to legal knowledge
 - [Proposed Solution](#proposed-solution)
 - [Target Users](#target-users)
 - [Features](#features)
-  - [Implemented / Active](#implemented--active)
-  - [Planned (On Hold)](#planned-on-hold)
+  - [Implemented](#implemented)
+  - [Planned](#planned)
 - [RAG Architecture](#rag-architecture)
 - [AI Models](#ai-models)
 - [Technology Stack](#technology-stack)
-- [Security](#security)
+- [Quick Start](#quick-start)
 - [Future Enhancements](#future-enhancements)
 - [Expected Impact](#expected-impact)
 
@@ -28,20 +40,20 @@ An AI-powered legal information platform that improves access to legal knowledge
 
 Court Companion reduces barriers to legal information by making laws, legal rights, and legal procedures easier to understand for people without legal expertise.
 
-**Initial focus:** Criminal law awareness  
-**Core approach:** Retrieval-Augmented Generation (RAG) — responses are grounded in verified legal sources rather than relying solely on large language model knowledge.
+**Initial focus:** Criminal law awareness (PPC, CrPC, ATA)  
+**Core approach:** Retrieval-Augmented Generation (RAG) — responses are grounded in verified statute text, not generic AI guesses.
 
 ---
 
 ## Problem Statement
 
-Millions of citizens struggle to understand legal rights, criminal procedures, FIR processes, arrests, bail procedures, and Pakistan Penal Code (PPC) sections due to:
+Millions of citizens struggle to understand legal rights, criminal procedures, FIR processes, arrests, bail procedures, and PPC sections due to:
 
 - Complex legal language
 - Lack of affordable legal consultation
 - Limited legal literacy
-- Poor accessibility to legal information
-- Absence of AI-powered legal assistance tailored to Pakistan
+- Poor accessibility to legal information — especially in regional languages
+- No AI legal assistant tailored to Pakistan's laws
 
 **Consequences:** Misinformation, delayed legal action, reduced legal awareness, and barriers to justice.
 
@@ -49,16 +61,16 @@ Millions of citizens struggle to understand legal rights, criminal procedures, F
 
 ## Proposed Solution
 
-Court Companion provides a bilingual AI legal assistant that:
+Court Companion provides a **multilingual** AI legal assistant that:
 
 | Capability | Description |
 |------------|-------------|
-| Multilingual Q&A | Accepts legal questions in English and Urdu |
-| Grounded answers | Retrieves relevant information from a curated legal knowledge base |
-| Simplified explanations | Generates understandable responses using AI |
-| PPC & CrPC guidance | Covers Pakistan Penal Code and Criminal Procedure Code |
-| Voice interaction | Supports speech-to-text and text-to-speech |
-| Conversation history | Maintains chat sessions for authenticated users |
+| **7-language Q&A** | Answers in English, Urdu (script), Roman Urdu, Pashto, Punjabi, Sindhi, Balochi |
+| **Grounded answers** | Retrieves relevant PPC / CrPC / ATA sections before generating a reply |
+| **Plain-language explanations** | AI simplifies statute text for ordinary citizens |
+| **Text + voice** | Type or speak your question; hear answers as they stream |
+| **Document upload** | Attach PDF/TXT for case-specific analysis |
+| **Source citations** | Shows which legal sources informed each answer |
 
 ---
 
@@ -70,7 +82,7 @@ Court Companion provides a bilingual AI legal assistant that:
 - Students
 - Rural communities
 - Low-literacy users
-- Individuals seeking legal awareness
+- Individuals seeking legal awareness under stress or intimidation
 
 ### Secondary Users
 
@@ -83,7 +95,7 @@ Court Companion provides a bilingual AI legal assistant that:
 
 ## Features
 
-### Implemented / Active
+### Implemented
 
 #### AI Legal Question Answering
 
@@ -95,48 +107,65 @@ Users can ask questions such as:
 - How can I apply for bail?
 - What punishment exists for theft?
 
-The system retrieves relevant legal documents and generates understandable responses.
+The system retrieves relevant legal documents and generates understandable responses with **source citations**.
 
 #### Retrieval-Augmented Generation (RAG)
 
-RAG reduces hallucinations and improves factual accuracy. Only retrieved legal information is used to formulate responses.
-
 ```text
 User Question
-    → Embedding Generation
-    → Vector Search (FAISS)
+    → Language detection / translation (non-English → English for search)
+    → Embedding Generation (all-MiniLM-L6-v2)
+    → Hybrid Vector Search (FAISS — 983 chunks)
     → Retrieve Relevant Legal Chunks
-    → Build Context
-    → LLM Response Generation
-    → Final Answer
+    → Build Context + LLM Generation
+    → Streamed Answer + Sources
 ```
 
-#### Multilingual Support
+#### Multilingual Support (7 languages)
 
-| Status | Languages |
-|--------|-----------|
-| **Current** | English, Urdu |
-| **Future** | Regional languages |
+| Language | Text chat | Voice |
+|----------|-----------|-------|
+| English | ✅ | ✅ |
+| Urdu (اردو) | ✅ | Planned |
+| Roman Urdu | ✅ | Planned |
+| Pashto (پښتو) | ✅ | Planned |
+| Punjabi (پنجابی) | ✅ | Planned |
+| Sindhi (سنڌي) | ✅ | Planned |
+| Balochi (بلوچی) | ✅ | Planned |
 
-#### Voice Support
+#### Voice Assistant
 
-- **Speech-to-Text** — capture questions by voice
-- **Text-to-Speech** — hear responses aloud
+- **Speech-to-text** — ask by microphone (English)
+- **Text-to-speech** — answers spoken as they stream
+- Same RAG pipeline as text chat
 
-Improves accessibility for elderly users, visually impaired users, and low-literacy populations.
+#### Flutter Client
+
+- **Web** (Chrome / Edge)
+- **Android APK** (release build connects to Render automatically)
+- Streaming chat UI, language picker, document attach, API status badge
+
+#### Backend API (deployed)
+
+- `GET /health` — index & LLM status
+- `POST /ask` — legal Q&A
+- `POST /ask/stream` — streaming NDJSON answers
+- `POST /analyze-document` — PDF/TXT analysis
 
 ---
 
-### Planned (On Hold)
-
-The following modules are documented for future implementation but are **not required for the initial release**.
+### Planned
 
 | Module | Description |
 |--------|-------------|
-| **Legal Resource Center** | Downloadable FIR templates, complaint applications, affidavits, legal forms, and citizen rights guides |
-| **Lawyer Recommendation** | Category-based lawyer suggestions (e.g., Criminal Law → Criminal Lawyer; Cybercrime → Specialist) with optional location-based matching |
-| **Chat History** | View, search, and download previous conversations (authenticated users) |
-| **Feedback System** | Rate responses, report inaccuracies, and submit improvement suggestions |
+| **Admin dashboard** | Usage analytics, language breakdown, impact charts |
+| **Feedback (👍 / 👎)** | Per-answer helpfulness ratings |
+| **Voice — all 7 languages** | STT + TTS for every supported language |
+| **Conversational memory** | Chat history, follow-up questions, agentic clarification |
+| **Legal Resource Center** | Downloadable FIR templates, complaint forms, rights guides |
+| **Lawyer Recommendation** | Category-based lawyer suggestions |
+| **Firebase Auth + history** | Saved sessions for authenticated users |
+| **Multi-instance deploy** | High availability, minimal downtime |
 
 ---
 
@@ -144,103 +173,102 @@ The following modules are documented for future implementation but are **not req
 
 ### Knowledge Sources
 
-Curated legal content from:
-
-| Source | Examples |
+| Source | Coverage |
 |--------|----------|
-| **Pakistan Penal Code (PPC)** | Section 302, Section 379, Section 420 |
-| **Criminal Procedure Code (CrPC)** | FIR process, arrest procedures, bail procedures |
-| **Legal FAQs** | What is FIR? How do I report a crime? What happens after arrest? |
-| **Legal Templates** | Complaint applications, FIR formats |
+| **Pakistan Penal Code (PPC)** | Offences, punishments, sections |
+| **Criminal Procedure Code (CrPC)** | FIR, arrest, bail, investigation |
+| **Anti-Terrorism Act (ATA)** | Scheduled offences & procedures |
+
+**983 section-aware chunks** indexed with metadata (document, section, topic).
 
 ### Data Processing Pipeline
 
 | Step | Action |
 |------|--------|
-| 1 | Collect legal documents |
-| 2 | Clean and normalize text |
-| 3 | Split documents into chunks (500–1000 tokens, 50–100 token overlap) |
-| 4 | Generate embeddings using Sentence Transformers |
-
-**Embedding models:**
-
-- Primary: `all-MiniLM-L6-v2`
-- Alternative: `BAAI/bge-small-en-v1.5`
-
-### Vector Database
-
-| Version | Technology |
-|---------|------------|
-| **Initial** | FAISS |
-| **Future** | Pinecone, Weaviate, Qdrant |
+| 1 | Collect legal PDFs (PPC, CrPC, ATA) |
+| 2 | Section-aware chunking (`build_index.py`) |
+| 3 | Generate embeddings (`all-MiniLM-L6-v2`) |
+| 4 | Store in FAISS + `chunks.json` |
 
 ### Retrieval Process
 
 ```text
-User Query
+User Query (any of 7 languages)
+    → Translate to English if needed (for search)
     → Query Embedding
-    → FAISS Similarity Search
-    → Top-K Documents Retrieved
+    → FAISS Hybrid Search (TOP_K=8)
     → Context Assembly
-    → Prompt Construction
-    → LLM Response Generation
+    → LLM Response (user's chosen language)
+    → Output guard + disclaimer
 ```
 
 ---
 
 ## AI Models
 
-### Embedding Model
+| Layer | Model | Provider | Purpose |
+|-------|-------|----------|---------|
+| **Answers** | `google/gemma-4-31B-it` | Together.ai | Legal explanation from retrieved context |
+| **Translation** | `meta-llama/Meta-Llama-3-8B-Instruct-Lite` | Together.ai | Non-English query → English for retrieval |
+| **Embeddings** | `all-MiniLM-L6-v2` | sentence-transformers | Semantic search over statute chunks |
 
-| Property | Value |
-|----------|-------|
-| **Library** | Sentence Transformers |
-| **Recommended model** | `all-MiniLM-L6-v2` |
-| **Purpose** | Semantic search over legal documents |
-
-### Large Language Model (LLM)
-
-| Property | Value |
-|----------|-------|
-| **Provider** | Together.ai (`together` Python SDK) |
-| **Model** | `meta-llama/Meta-Llama-3-8B-Instruct-Lite` |
-| **Purpose** | Generate natural-language legal explanations from retrieved context |
+*Models are under active evaluation for quality, latency, and cost at civic scale.*
 
 ---
 
 ## Technology Stack
 
-| Layer | Technology | Details |
-|-------|------------|---------|
-| **Frontend** | Flutter (Dart) | Android, iOS, Web |
-| **Backend** | FastAPI (Python) | Retrieval, RAG pipeline, authentication, APIs |
-| **Database** | Firebase Firestore | Users, chat history, feedback, lawyer data |
-| **Authentication** | Firebase Auth | Email login, Google login |
-| **Vector Search** | FAISS | Legal embeddings, semantic indexes |
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | Flutter (Dart) — Android, Web |
+| **Backend** | FastAPI (Python) |
+| **Vector search** | FAISS (file-based, 983 vectors) |
+| **LLM API** | Together.ai |
+| **Hosting** | Render (HTTPS) |
+| **Voice** | `speech_to_text`, browser TTS / `flutter_tts` |
 
 ---
 
-## Security
+## Quick Start
 
-- Firebase Authentication
-- Secure API access
-- Encrypted user data
-- Role-based access control (RBAC)
-- Admin authorization
+### Backend (local)
+
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+### Flutter (web — production API)
+
+```bash
+cd Frontend
+flutter pub get
+flutter run -d chrome --dart-define=API_BASE_URL=https://ai-legal-assistant-fes8.onrender.com
+```
+
+### Android APK (release — uses Render automatically)
+
+```bash
+cd Frontend
+flutter build apk --release
+# Output: build/app/outputs/flutter-apk/app-release.apk
+```
+
+See also: [`Frontend/README.md`](Frontend/README.md) · [`SUBMISSION_SCREENING.md`](SUBMISSION_SCREENING.md)
 
 ---
 
 ## Future Enhancements
 
-- Constitutional law support
-- Civil law support
-- Family law support
-- Court case tracking
-- Location-based lawyer discovery
-- Legal document generation
-- Regional language support
-- Fine-tuned legal LLM
-- Government and NGO integrations
+- Full voice support in all 7 languages
+- Agentic follow-up questions and session memory
+- Admin analytics and citizen feedback loop
+- Open-source release with multi-deployment instances
+- Constitutional, civil, and family law expansion
+- Government and NGO partnerships
 
 ---
 
@@ -248,10 +276,13 @@ User Query
 
 Court Companion aims to:
 
-- Improve legal literacy
-- Increase access to trustworthy legal information
+- Improve legal literacy across Pakistan's language communities
+- Increase access to trustworthy legal information on mobile
 - Reduce dependence on informal misinformation
-- Improve accessibility of legal resources
-- Empower citizens to better understand their rights
+- Empower citizens to understand their rights calmly and clearly
 
-**Long-term vision:** Become Pakistan's most accessible AI-powered legal information platform.
+**Long-term vision:** Pakistan's most accessible AI-powered multilingual legal information platform.
+
+---
+
+*AI for Civic Innovation Hackathon 2026 — Code for Pakistan × Grey Software × Scrimba × FAST NUCES*
