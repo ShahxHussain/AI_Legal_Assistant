@@ -41,7 +41,7 @@ class VoiceService {
   Future<VoiceInitResult> init({bool requestPermission = false}) async {
     _lastHint = null;
 
-    if (requestPermission && !kIsWeb) {
+    if (requestPermission && !kIsWeb) { 
       final mic = await Permission.microphone.request();
       if (!mic.isGranted) {
         _lastHint =
