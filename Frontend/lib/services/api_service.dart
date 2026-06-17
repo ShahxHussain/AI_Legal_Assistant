@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
 import '../models/ask_response.dart';
+import 'device_identity.dart';
 
 class ApiException implements Exception {
   ApiException(this.message, {this.statusCode});
@@ -19,6 +20,11 @@ class ApiService {
   ApiService({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
+
+  Future<String> _resolvedDeviceId(String? deviceId) async {
+    if (deviceId != null && deviceId.isNotEmpty) return deviceId;
+    return DeviceIdentity.ensureDeviceId();
+  }
 
   Future<bool> checkHealth() async {
     try {
@@ -42,14 +48,13 @@ class ApiService {
     String? deviceId,
     String? conversationId,
   }) async* {
+    final resolvedDeviceId = await _resolvedDeviceId(deviceId);
     final body = <String, dynamic>{
       'question': question,
       'language': language,
       'voice_mode': voiceMode,
+      'device_id': resolvedDeviceId,
     };
-    if (deviceId != null && deviceId.isNotEmpty) {
-      body['device_id'] = deviceId;
-    }
     if (conversationId != null && conversationId.isNotEmpty) {
       body['conversation_id'] = conversationId;
     }
@@ -211,15 +216,16 @@ class ApiService {
 
   Future<void> submitFeedback({
     required String messageId,
-    required String deviceId,
+    String? deviceId,
     required String rating,
     String? conversationId,
     String language = 'urdu_script',
     String channel = 'chat',
   }) async {
+    final resolvedDeviceId = await _resolvedDeviceId(deviceId);
     final body = <String, dynamic>{
       'message_id': messageId,
-      'device_id': deviceId,
+      'device_id': resolvedDeviceId,
       'rating': rating,
       'language': language,
       'channel': channel,

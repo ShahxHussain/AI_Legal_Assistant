@@ -54,7 +54,29 @@ class AdminStatsService:
                 or []
             )
             sessions_7d = len(conv_rows)
-            active_users = len({r["device_id"] for r in conv_rows if r.get("device_id")})
+
+            device_ids: set[str] = {
+                r["device_id"]
+                for r in conv_rows
+                if (r.get("device_id") or "").strip()
+            }
+
+            # Web/APK: also count devices that asked questions even if conversation row missed.
+            event_rows = (
+                client.table("usage_events")
+                .select("device_id")
+                .eq("event_type", "question_asked")
+                .gte("created_at", since)
+                .execute()
+                .data
+                or []
+            )
+            for row in event_rows:
+                did = (row.get("device_id") or "").strip()
+                if did:
+                    device_ids.add(did)
+
+            active_users = len(device_ids)
 
             msg_rows = (
                 client.table("messages")

@@ -93,7 +93,26 @@ class AnalyticsStore:
             .data
             or []
         )
-        active_users = len({r["device_id"] for r in conv_rows if r.get("device_id")})
+        device_ids: set[str] = {
+            r["device_id"]
+            for r in conv_rows
+            if (r.get("device_id") or "").strip()
+        }
+        event_rows = (
+            get_supabase()
+            .table("usage_events")
+            .select("device_id")
+            .eq("event_type", "question_asked")
+            .gte("created_at", since_7d)
+            .execute()
+            .data
+            or []
+        )
+        for row in event_rows:
+            did = (row.get("device_id") or "").strip()
+            if did:
+                device_ids.add(did)
+        active_users = len(device_ids)
 
         sessions_7d = (
             get_supabase()

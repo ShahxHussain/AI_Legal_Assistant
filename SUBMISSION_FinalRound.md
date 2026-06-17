@@ -4,6 +4,15 @@
 
 ### `LIVE Here:` https://ai-legal-assistant-seven.vercel.app/ (landing) · https://ai-legal-assistant-two.vercel.app/ (web app)
 
+| Resource | URL |
+|----------|-----|
+| **Landing page** (marketing + admin) | https://ai-legal-assistant-seven.vercel.app/ |
+| **Flutter web app** (primary demo) | https://ai-legal-assistant-two.vercel.app/ |
+| **Android APK** | [Google Drive](https://drive.google.com/file/d/1t2dTJpqPHm4YOMAs8gbkLC22IyyyV04H/view?usp=sharing) |
+| **API** | https://ai-legal-assistant-fes8.onrender.com |
+| **Admin dashboard** | https://ai-legal-assistant-seven.vercel.app/admin |
+| **GitHub** | https://github.com/ShahxHussain/AI_Legal_Assistant |
+
 ---
 
 ## Why I Built This
@@ -103,8 +112,8 @@ A simple FAQ bot can answer "what is PPC 302?" Court Companion is built to handl
 | **6** | API | **IF** question is not English → **Llama 8B** translates it to an English search query. |
 | **7** | API | Embeds the English query → **FAISS** retrieves top PPC/CrPC/ATA chunks (hybrid keyword + vector). |
 | **8** | API | Builds prompt: prior turns + English statute text + **mandatory answer-language rule** from app picker. |
-| **9** | API | **Llama 3.3 70B** streams the answer token-by-token in the user's chosen language. |
-| **10** | Flutter | Shows live text, source chips, disclaimer; optional 👍/👎; voice mode speaks each sentence as it arrives. |
+| **9** | API | **Primary LLM** streams the answer token-by-token in the user's chosen language (model is env-configurable — **Gemma 4 31B** on Render today). |
+| **10** | Flutter | Shows live text, **top 3 source chips** (most relevant), disclaimer; optional 👍/👎; voice mode speaks each sentence as it arrives. |
 
 Court Companion uses **two separate language pipelines** that must not be confused:
 
@@ -141,6 +150,76 @@ Legal statutes are long, dense, and multilingual — keyword search alone fails.
 | **Voice** | `speech_to_text`, browser TTS / `flutter_tts` |
 | **Admin** | React + Vite at `/admin` on landing site |
 
+### Models — what we use and how
+
+| Model | Provider | Role in pipeline |
+|-------|----------|------------------|
+| **google/gemma-4-31B-it** | Together.ai | **Primary answer generation** on deployed API (Render `LLM_MODEL`) |
+| **meta-llama/Meta-Llama-3-8B-Instruct-Lite** | Together.ai | **Query translation** — non-English questions → English before FAISS search |
+| **all-MiniLM-L6-v2** | sentence-transformers (local) | **Embeddings** — runs on the API server; no per-query API cost |
+
+**How the LLM is used (not a raw chatbot):**
+
+1. **Retrieve first** — FAISS finds relevant PPC/CrPC/ATA chunks (hybrid vector + keyword).
+2. **Constrain the prompt** — system prompt says: answer only from retrieved context; cite sources; legal information not advice.
+3. **Stream** — `/ask/stream` returns NDJSON deltas so the app feels instant.
+4. **Guard output** — sanitize step strips unsafe formatting; preserve Urdu script.
+
+The model never sees the full statute books — only the **top-k retrieved chunks** plus short conversation history (capped). That keeps token use bounded and reduces hallucination risk.
+
+**Model choice is swappable** — change `LLM_MODEL` in Render env; no app rebuild required. I'm still A/B testing quality vs latency vs cost (8B Lite vs 31B vs larger Llama variants).
+
+### Cost — honest numbers for judges
+
+| Layer | Hackathon / pilot cost | Notes |
+|-------|------------------------|-------|
+| **Render API** | **$0** (free tier) | Cold start ~30–50s after idle; fine for demo, not for 24/7 production |
+| **Vercel** (landing + web) | **$0** (hobby) | Static landing + Flutter web build |
+| **Supabase** | **$0** (free tier) | Conversations, feedback, usage events |
+| **Together.ai** | **Pay-per-token** — main variable cost | Only paid component at scale |
+| **Embeddings** | **$0** at runtime | Pre-built index; MiniLM runs locally on server |
+
+**Rough per-question LLM cost (order of magnitude):**
+
+- Translation call (8B, ~100–250 tokens): **fractions of a cent**
+- Answer generation (31B, ~500–3,200 max tokens depending on env): **~$0.001–$0.01 per question** (varies with model and length)
+- At **1,000 questions/month** → roughly **single-digit to low tens of USD** on Together.ai — not thousands
+
+**Cost controls already in the architecture:**
+
+- RAG reduces tokens — model reads ~5–8 chunks, not whole corpora
+- `max_tokens` caps per request (`LLM_MAX_TOKENS` on Render)
+- Conversation history limited (`CONVERSATION_HISTORY_LIMIT=10`)
+- Smaller 8B model for translation only; larger model only for final answer
+- Admin dashboard tracks volume — can throttle or switch to cheaper model if usage spikes
+
+**If they ask "who pays?"** — For civic pilot: NGO/sponsor or government legal-aid budget at pennies per citizen question; far cheaper than one hour of lawyer time for basic orientation.
+
+### Scalability — how I'd defend it
+
+**Today (prototype):** One Render instance, file-based FAISS in memory, Supabase for state. Good for **hundreds to low thousands of users/month** on free tiers.
+
+**What scales cleanly:**
+
+| Piece | Now | Scale path |
+|-------|-----|------------|
+| **Client** | Flutter web + APK | Stateless; CDN/Vercel handles web traffic |
+| **API** | Single FastAPI container | Horizontal replicas behind load balancer |
+| **Vector search** | FAISS in RAM (~983 vectors) | Chroma / pgvector / Pinecone when corpus grows to case law |
+| **LLM** | Together.ai API | Managed inference — no GPU ops on our side |
+| **DB** | Supabase Postgres | Connection pooling; read replicas at NGO scale |
+| **Index builds** | Offline `build_index.py` | Rebuild on corpus update; no downtime if blue-green deploy |
+
+**Talking points for judges:**
+
+> "We're not training models — we're orchestrating retrieval + generation. The heavy lifting scales with Together.ai and Postgres. Our bottleneck today is Render free-tier cold starts, not architecture."
+
+> "Legal corpus is small (983 chunks) — vector search is milliseconds. Adding Supreme Court judgments is an indexing problem, not a rewrite."
+
+> "Multi-language without 7 separate indexes: one English FAISS index + translate-before-retrieve. That's how we scale languages without 7× storage."
+
+> "Citizen tier stays stateless-friendly; Pro tier (lawyers) adds case workspaces in Supabase — same backend pattern."
+
 ---
 
 ## Features
@@ -152,7 +231,8 @@ Everything below is **implemented and working** in the current prototype — not
 | Feature | What you get |
 |---------|----------------|
 | **Home screen** | **Ask in chat** · **Ask by voice** · **Court Companion Pro** (beta) |
-| **Platforms** | Flutter **web** (Chrome) + **Android APK** (release build → Render API) |
+| **Platforms** | Flutter **web** (Vercel — primary) + **Android APK** (release build → Render API) |
+| **Landing page** | React marketing site with Pro section, live links, admin at `/admin` |
 | **API status** | Online / offline badge on chat and voice screens |
 | **No login required** | Anonymous `device_id` — citizens use the app without accounts |
 
@@ -184,7 +264,7 @@ Everything below is **implemented and working** in the current prototype — not
 | **Statute corpus** | PPC, CrPC, ATA — **983 indexed chunks** with section metadata |
 | **Hybrid retrieval** | FAISS vector search + keyword signals; translate-before-retrieve for non-English |
 | **Scenario reasoning** | Multi-fact questions → applicable law, procedure, rights, next steps |
-| **Source citations** | Every legal answer tied to retrieved statute excerpts |
+| **Source citations** | Every legal answer tied to retrieved statute excerpts; **UI shows top 3** most relevant chips |
 | **Output guard** | Sanitized LLM output; preserves Urdu punctuation and formatting |
 
 ### Backend & data
@@ -199,9 +279,15 @@ Everything below is **implemented and working** in the current prototype — not
 
 | Feature | What you get |
 |---------|----------------|
-| **Admin dashboard** | React app at `/admin` — sessions, questions/day, language mix, top topics |
+| **Admin dashboard** | React app at `/admin` — sessions, questions/day, language mix, **top topics (30d)** |
 | **Recent feedback** | 👍/👎 stream with mobile-friendly layout |
-| **Usage events** | `question_asked`, `answer_completed` logged for civic impact reporting |
+| **Usage events** | `question_asked`, `answer_completed`, `feedback_given` logged for civic impact reporting |
+
+**How analytics categorizes "hot topics":**
+
+- When a user asks a question, the API runs **keyword-based topic detection** on the question text (e.g. `fir`, `bail`, `theft`, `ppc_sections`, `arrest_rights`, `fraud`, `assault`, `terrorism`, or `other`).
+- These tags are stored on **`usage_events`** → admin **Top topics** chart.
+- **Feedback (👍/👎)** is stored separately in **`answer_feedback`** — drives **Helpfulness %** (up vs down in last 7 days). Topics on feedback rows can be enriched later by linking to the parent question.
 
 ### Court Companion Pro (beta — lawyers)
 
@@ -288,10 +374,25 @@ Design doc: [`docs/COURT_COMPANION_PRO.md`](docs/COURT_COMPANION_PRO.md)
 ### Platform & scale
 
 - **Voice for remaining languages** — Roman Urdu, Pashto, Punjabi, Sindhi, Balochi (STT + TTS)
-- **Multi-instance deployment** — no single point of failure
+- **Horizontal API scaling** — multiple Render/Fly instances + load balancer
+- **Vector DB migration** — pgvector or managed search when case-law corpus grows
 - **Offline FAQ cache** — core rights without internet (rural users)
 - **Open source release** — public repo, docs, contribution guide
 - **Corpus expansion** — constitutional, civil, family law
+
+---
+
+## Judge Q&A — quick answers
+
+| If they ask… | Say this |
+|--------------|----------|
+| **What model?** | Together.ai — **Gemma 4 31B** for answers on production; **Llama 3 8B Lite** for translation; **MiniLM** locally for embeddings. Swappable via env vars. |
+| **How do you use it?** | RAG: retrieve statute chunks → prompt with context + language rule → stream answer. Not open-ended ChatGPT. |
+| **Hallucination risk?** | Grounded in retrieved PPC/CrPC/ATA text; source chips shown; disclaimer on every answer; output sanitization. |
+| **Cost?** | Infra ~$0 on free tiers; Together.ai ~fractions of a cent to ~1¢ per question; 1k questions/month ≈ low tens of USD. |
+| **Scalability?** | Stateless clients; API replicas; managed LLM + Postgres; FAISS → pgvector when corpus grows. Bottleneck today is free-tier cold start, not design. |
+| **Why not train your own?** | Civic MVP needs **curated legal data + retrieval**, not a bigger model. Fine-tuning is a later phase for routing/tone, not statute knowledge. |
+| **Data privacy?** | Anonymous `device_id`; no citizen login; API key server-side only; Supabase for optional history. |
 
 ---
 
@@ -299,8 +400,10 @@ Design doc: [`docs/COURT_COMPANION_PRO.md`](docs/COURT_COMPANION_PRO.md)
 
 | Question | Answer |
 |----------|--------|
-| Working prototype? | Yes — full **Features** section above; chat, voice (EN + Urdu), 7 text languages, admin, APK, deployed API |
+| Working prototype? | Yes — web app, APK, chat, voice (EN + Urdu), 7 text languages, admin, deployed API |
+| Live demo URL? | **Web:** https://ai-legal-assistant-two.vercel.app/ · **Landing:** https://ai-legal-assistant-seven.vercel.app/ |
 | AI used meaningfully? | Yes — RAG over 983 legal chunks + multilingual LLM pipeline + multi-turn context |
+| Models & cost? | Together.ai (Gemma 31B + Llama 8B translate); ~$0 infra on free tier; pennies per question at pilot scale |
 | Feasibility validated? | In progress — testing models for quality, latency, and cost |
 | Civic impact? | Legal rights in plain language, 7 text languages + Urdu voice, on mobile; data-driven admin KPIs |
 | What's next? | **Court Companion Pro** workspace; more voice languages; case-law corpus; open-source path |

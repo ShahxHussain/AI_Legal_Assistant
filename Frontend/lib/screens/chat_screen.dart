@@ -74,9 +74,9 @@ class _ChatScreenState extends State<ChatScreen> {
   bool get _isWide => MediaQuery.sizeOf(context).width >= _sidebarBreakpoint;
 
   Future<String> _ensureDeviceId() async {
-    if (_deviceId != null && _deviceId!.isNotEmpty) return _deviceId!;
-    _deviceId = await DeviceIdentity.ensureDeviceId();
-    return _deviceId!;
+    final id = await DeviceIdentity.ensureDeviceId();
+    _deviceId = id;
+    return id;
   }
 
   Future<void> _loadSession() async {
