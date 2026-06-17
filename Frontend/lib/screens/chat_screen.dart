@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:uuid/uuid.dart';
 
 import '../config/api_config.dart';
 import '../models/chat_message.dart';
@@ -72,8 +73,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
   bool get _isWide => MediaQuery.sizeOf(context).width >= _sidebarBreakpoint;
 
-  Future<void> _loadSession() async {
+  Future<String> _ensureDeviceId() async {
+    if (_deviceId != null && _deviceId!.isNotEmpty) return _deviceId!;
     _deviceId = await DeviceIdentity.ensureDeviceId();
+    return _deviceId!;
+  }
+
+  Future<void> _loadSession() async {
+    await _ensureDeviceId();
     // Opening chat from home always starts fresh; use sidebar for past chats.
     await _session.clearAll();
     if (mounted) {
@@ -317,9 +324,12 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_isSending) return;
     if (text.isEmpty && file == null) return;
 
-    final userId = '${DateTime.now().millisecondsSinceEpoch}_user';
-    final loadingId = '${DateTime.now().millisecondsSinceEpoch}_loading';
-    final answerId = '${DateTime.now().millisecondsSinceEpoch}_answer';
+    await _ensureDeviceId();
+
+    const uuid = Uuid();
+    final userId = uuid.v4();
+    final loadingId = '${uuid.v4()}_loading';
+    final answerId = uuid.v4();
 
     final userDisplayText = text.isNotEmpty
         ? text
@@ -419,6 +429,7 @@ class _ChatScreenState extends State<ChatScreen> {
               id: answerId,
               role: MessageRole.assistant,
               text: partial,
+              isLoading: true,
             );
           }
         });
@@ -444,6 +455,7 @@ class _ChatScreenState extends State<ChatScreen> {
           text: result.answer,
           sources: List.from(result.sources),
           disclaimer: result.disclaimer,
+          isLoading: false,
         );
       }
       _conversationId = result.conversationId ?? _conversationId;

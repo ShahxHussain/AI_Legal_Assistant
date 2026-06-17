@@ -33,6 +33,14 @@ export default function About() {
             </ul>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
+                href={SITE.webAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-green"
+              >
+                Open web app
+              </a>
+              <a
                 href={SITE.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -41,9 +49,6 @@ export default function About() {
                 <RiGithubLine size={16} />
                 GitHub repository
                 <RiExternalLinkLine size={14} />
-              </a>
-              <a href="#download" className="btn-green">
-                Try the APK
               </a>
             </div>
           </motion.div>

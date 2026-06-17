@@ -66,9 +66,13 @@ npx vercel --prod
 
 ## Links (configured)
 
-- **APK:** [Google Drive](https://drive.google.com/file/d/1t2dTJpqPHm4YOMAs8gbkLC22IyyyV04H/view?usp=sharing)
-- **GitHub:** [ShahxHussain/AI_Legal_Assistant](https://github.com/ShahxHussain/AI_Legal_Assistant)
-- **API:** https://ai-legal-assistant-fes8.onrender.com
+| Resource | URL |
+|----------|-----|
+| **Web app (Flutter)** | https://ai-legal-assistant-two.vercel.app/ |
+| **Landing page** | https://ai-legal-assistant-seven.vercel.app/ |
+| **APK** | [Google Drive](https://drive.google.com/file/d/1t2dTJpqPHm4YOMAs8gbkLC22IyyyV04H/view?usp=sharing) |
+| **GitHub** | [ShahxHussain/AI_Legal_Assistant](https://github.com/ShahxHussain/AI_Legal_Assistant) |
+| **API** | https://ai-legal-assistant-fes8.onrender.com |
 
 Edit `src/config/site.js` to update URLs.
 

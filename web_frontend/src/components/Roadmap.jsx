@@ -1,17 +1,21 @@
 import { motion } from 'framer-motion';
-import { RiCheckLine, RiDownloadLine } from 'react-icons/ri';
+import { RiCheckLine, RiArrowRightLine } from 'react-icons/ri';
 import { SITE } from '../config/site';
 import { fadeUp, MotionSection, SectionLabel, stagger } from '../utils/motion';
 
 const built = [
+  { title: 'Flutter web on Vercel', detail: 'Full app at ai-legal-assistant-two.vercel.app — no install.' },
   { title: 'Streaming text chat', detail: 'Token-by-token answers with live source chips.' },
+  { title: 'Chat history sidebar', detail: 'Reopen past conversations; follow-ups keep session context.' },
   { title: 'Seven text languages', detail: 'Urdu, Roman Urdu, Pashto, Punjabi, Sindhi, Balochi, English.' },
-  { title: 'Voice I/O', detail: 'Speak questions; hear answers stream back (English voice today).' },
-  { title: 'Document upload', detail: 'PDF & TXT analysis with optional statute cross-reference.' },
+  { title: 'Voice I/O (EN + UR)', detail: 'Speak and hear answers in English and Urdu; more langs planned.' },
+  { title: 'Document attach in chat', detail: 'PDF & TXT via clip icon — optional statute cross-reference.' },
+  { title: 'Answer feedback', detail: 'Thumbs up / down per response for quality improvement.' },
   { title: 'RAG pipeline', detail: '983 indexed PPC, CrPC, and ATA chunks via FAISS.' },
-  { title: 'Android APK + Web', detail: 'Release APK on Render; Chrome web client.' },
+  { title: 'Android APK', detail: 'Release build on Google Drive; same Render API as web.' },
   { title: 'Source citations', detail: 'Every answer links to the statute section retrieved.' },
-  { title: 'API status badge', detail: 'Live online/offline indicator in the app.' },
+  { title: 'Admin dashboard', detail: 'React /admin — usage KPIs, charts, recent feedback.' },
+  { title: 'Court Companion Pro (beta)', detail: 'Lawyer product vision in-app; full workspace shipping next.' },
 ];
 
 export default function Roadmap() {
@@ -24,7 +28,7 @@ export default function Roadmap() {
             Working prototype
           </h2>
           <p className="mt-4 text-[15px] leading-relaxed text-neutral-500">
-            Everything below is live in the APK and web app — not mockups.
+            Everything below is live in the web app and APK — not mockups.
           </p>
         </motion.div>
 
@@ -57,17 +61,23 @@ export default function Roadmap() {
           className="mt-12 flex flex-col items-center rounded-xl border border-neutral-200 bg-neutral-50 px-6 py-10 text-center"
         >
           <p className="max-w-md text-[15px] text-neutral-600">
-            Try the build now — then scroll to see what&apos;s coming next.
+            Open the live web app now — then scroll for Court Companion Pro and what&apos;s
+            coming next.
           </p>
-          <a
-            href={SITE.apkUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-green mt-6 px-8 py-3"
-          >
-            <RiDownloadLine size={16} />
-            Download APK
-          </a>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <a
+              href={SITE.webAppUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-green px-8 py-3"
+            >
+              Open web app
+              <RiArrowRightLine size={16} />
+            </a>
+            <a href="#pro" className="btn-pro-outline px-6 py-3">
+              Court Companion Pro
+            </a>
+          </div>
         </motion.div>
       </div>
     </MotionSection>

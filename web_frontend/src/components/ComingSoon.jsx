@@ -1,58 +1,56 @@
 import { motion } from 'framer-motion';
 import {
-  RiBrainLine,
+  RiFolderOpenLine,
   RiQuestionAnswerLine,
+  RiScales3Line,
   RiMicLine,
-  RiBarChartGroupedLine,
-  RiThumbUpLine,
   RiUserSettingsLine,
   RiOpenSourceLine,
   RiWifiOffLine,
   RiSparklingLine,
+  RiVipCrownLine,
 } from 'react-icons/ri';
-import { fadeUp, MotionSection, SectionLabel, stagger, GridBackdrop } from '../utils/motion';
+import { fadeUp, MotionSection, stagger, GridBackdrop } from '../utils/motion';
 
 const COMING = [
   {
-    id: 'memory',
-    icon: RiBrainLine,
-    phase: 'Q3 2026',
-    title: 'Conversation memory',
-    summary: 'Multi-turn context so follow-ups make sense.',
+    id: 'pro-workspace',
+    icon: RiFolderOpenLine,
+    phase: 'Pro · Beta',
+    title: 'Full case workspace',
+    summary: 'Upload FIR, pleadings, orders — one case, full context.',
     detail:
-      'Remember prior questions in a session — e.g. after asking about FIR, ask "what about bail?" without repeating context.',
+      'Court Companion Pro keeps every document in a single matter. Ask across filings without re-uploading. Free in beta; paid tiers at launch.',
+    footer: 'In beta — explore in app',
     demo: (
-      <div className="space-y-2 text-[11px]">
-        <div className="ml-auto w-[75%] rounded-md bg-neutral-800 px-2 py-1.5 text-white">
-          What is FIR?
-        </div>
-        <div className="w-[80%] rounded-md border border-neutral-200 bg-white px-2 py-1.5 text-neutral-600">
-          Under CrPC §154…
-        </div>
-        <div className="ml-auto w-[70%] rounded-md bg-primary/90 px-2 py-1.5 text-white">
-          And bail for that?
-        </div>
-        <div className="flex items-center gap-1 text-primary">
-          <RiSparklingLine size={12} />
-          <span className="font-medium">Recalls FIR thread</span>
-        </div>
+      <div className="space-y-1.5">
+        {['FIR · scanned PDF', 'Bail application', 'Order sheet'].map((row) => (
+          <div
+            key={row}
+            className="flex items-center justify-between rounded border border-amber-200/60 bg-amber-50/50 px-2 py-1 text-[10px] text-amber-900"
+          >
+            {row}
+            <RiVipCrownLine className="text-amber-600" size={12} />
+          </div>
+        ))}
       </div>
     ),
   },
   {
-    id: 'agentic',
+    id: 'agentic-pro',
     icon: RiQuestionAnswerLine,
-    phase: 'Q3 2026',
-    title: 'Agentic follow-ups',
-    summary: 'AI suggests the next question you should ask.',
+    phase: 'Pro only',
+    title: 'Agentic clarifying questions',
+    summary: 'AI asks before it cites — theft vs snatching, bail category, etc.',
     detail:
-      'After answering, Court Companion proposes clarifying questions — offence type, city, arrest status — to narrow legal guidance.',
+      'Unlike free citizen chat, Pro asks for missing facts first so answers match the actual offence and procedure. Planned for lawyer workspace only.',
+    footer: 'Court Companion Pro',
     demo: (
       <div className="flex flex-wrap gap-1.5">
-        {['Was anyone arrested?', 'Which PPC section?', 'Need bail steps?'].map((q) => (
+        {['Was property taken?', 'Arrested or at large?', 'Which court?'].map((q) => (
           <span
             key={q}
-            className="rounded-full border border-dashed border-primary/40 bg-primary-pale px-2 py-1 text-[10px] font-medium text-primary"
+            className="rounded-full border border-dashed border-amber-400/50 bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-900"
           >
             {q}
           </span>
@@ -61,70 +59,59 @@ const COMING = [
     ),
   },
   {
+    id: 'caselaw',
+    icon: RiScales3Line,
+    phase: 'Pro',
+    title: 'Case-law retrieval',
+    summary: 'Public judgments alongside PPC, CrPC, ATA statutes.',
+    detail:
+      'RAG over Supreme Court, High Court, and Sessions judgments — cited next to statute chunks for advocate-grade research.',
+    footer: 'Coming to Pro',
+    demo: (
+      <div className="space-y-1 text-[10px]">
+        <p className="rounded border border-neutral-200 bg-white px-2 py-1 text-neutral-600">
+          PLD 2019 SC 123 · bail principles
+        </p>
+        <p className="rounded border border-primary/20 bg-primary-pale px-2 py-1 text-primary">
+          CrPC §497 · indexed chunk
+        </p>
+      </div>
+    ),
+  },
+  {
     id: 'voice-all',
     icon: RiMicLine,
     phase: 'Q4 2026',
     title: 'Voice in all 7 languages',
-    summary: 'STT + TTS for Urdu, Pashto, Sindhi, and more.',
+    summary: 'English & Urdu live today — Pashto, Sindhi, Punjabi, and more next.',
     detail:
-      'Today voice is English-only. Next: speak and hear answers in every supported text language.',
+      'STT + TTS for every supported text language so rural citizens can speak in their mother tongue, not just type.',
+    footer: 'EN + UR shipped',
     demo: (
       <div className="grid grid-cols-4 gap-1">
-        {['EN', 'UR', 'PS', 'SD', 'PA', 'BN', 'RO'].map((code) => (
+        {[
+          { code: 'EN', live: true },
+          { code: 'UR', live: true },
+          { code: 'PS', live: false },
+          { code: 'SD', live: false },
+          { code: 'PA', live: false },
+          { code: 'BN', live: false },
+          { code: 'RO', live: false },
+        ].map(({ code, live }) => (
           <span
             key={code}
-            className="rounded border border-neutral-200 bg-white py-1 text-center text-[9px] font-bold text-neutral-500"
+            className={`rounded py-1 text-center text-[9px] font-bold ${
+              live
+                ? 'border border-primary/40 bg-primary-pale text-primary'
+                : 'border border-neutral-200 bg-white text-neutral-400'
+            }`}
           >
             {code}
           </span>
         ))}
-        <span className="col-span-3 rounded border border-primary/30 bg-primary-pale py-1 text-center text-[9px] font-semibold text-primary">
-          Mic · all langs
+        <span className="col-span-4 rounded border border-neutral-200 bg-neutral-50 py-1 text-center text-[9px] text-neutral-500">
+          Mic · 2 of 7 live
         </span>
-      </div>
-    ),
-  },
-  {
-    id: 'admin',
-    icon: RiBarChartGroupedLine,
-    phase: 'Q4 2026',
-    title: 'Admin analytics',
-    summary: 'Dashboard for usage, languages, and impact.',
-    detail:
-      'Track questions per language, top PPC/CrPC topics, response latency, and citizen reach for NGOs and hackathon demos.',
-    demo: (
-      <div className="flex items-end gap-1 h-12">
-        {[40, 65, 45, 80, 55, 90].map((h, i) => (
-          <motion.div
-            key={i}
-            className="flex-1 rounded-t bg-primary/30"
-            initial={{ height: '20%' }}
-            whileHover={{ height: `${h}%`, backgroundColor: 'rgba(13, 92, 46, 0.55)' }}
-            transition={{ duration: 0.3 }}
-          />
-        ))}
-      </div>
-    ),
-  },
-  {
-    id: 'feedback',
-    icon: RiThumbUpLine,
-    phase: 'Q3 2026',
-    title: 'Answer feedback',
-    summary: 'Thumbs up / down on every response.',
-    detail:
-      'Citizens rate helpfulness per answer. Data improves prompts, retrieval, and model routing over time.',
-    demo: (
-      <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2">
-        <span className="text-[10px] text-neutral-500">Was this helpful?</span>
-        <div className="flex gap-2">
-          <span className="rounded-md border border-primary/20 bg-primary-pale px-2 py-0.5 text-primary">
-            <RiThumbUpLine size={14} />
-          </span>
-          <span className="rounded-md border border-neutral-200 px-2 py-0.5 text-neutral-400">
-            ↓
-          </span>
-        </div>
       </div>
     ),
   },
@@ -132,10 +119,11 @@ const COMING = [
     id: 'accounts',
     icon: RiUserSettingsLine,
     phase: '2027',
-    title: 'Accounts & history',
-    summary: 'Save sessions and revisit past answers.',
+    title: 'Accounts & sync',
+    summary: 'Optional sign-in to sync history across devices.',
     detail:
-      'Optional sign-in to store chat history, uploaded documents, and favourite statute sections.',
+      'Today history is per-device. Future: account to store chats, documents, and favourite statute sections in the cloud.',
+    footer: 'Coming soon',
     demo: (
       <div className="space-y-1.5">
         {['FIR procedure · Urdu', 'Bail under 497 · EN', 'Doc: charge sheet'].map((row) => (
@@ -144,7 +132,7 @@ const COMING = [
             className="flex items-center justify-between rounded border border-neutral-100 bg-neutral-50 px-2 py-1 text-[10px] text-neutral-600"
           >
             {row}
-            <span className="text-neutral-400">→</span>
+            <span className="text-neutral-400">☁</span>
           </div>
         ))}
       </div>
@@ -158,6 +146,7 @@ const COMING = [
     summary: 'Public repo, docs, and contribution guide.',
     detail:
       'Full stack open for civic technologists — deploy your own instance with custom corpora or languages.',
+    footer: 'Coming soon',
     demo: (
       <div className="rounded-lg border border-neutral-200 bg-neutral-900 px-3 py-2 font-mono text-[10px] text-green-400">
         <span className="text-neutral-500">$</span> git clone court-companion
@@ -174,6 +163,7 @@ const COMING = [
     summary: 'Core rights available without internet.',
     detail:
       'Pre-loaded answers for FIR, arrest rights, and emergency steps — for rural areas with weak connectivity.',
+    footer: 'Coming soon',
     demo: (
       <div className="flex items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50/80 px-2 py-2">
         <RiWifiOffLine className="text-amber-600" size={16} />
@@ -188,6 +178,7 @@ const COMING = [
 
 function ComingCard({ item, index }) {
   const Icon = item.icon;
+  const isPro = item.phase.toLowerCase().includes('pro');
 
   return (
     <motion.article
@@ -195,15 +186,39 @@ function ComingCard({ item, index }) {
       variants={fadeUp}
       whileHover={{ y: -6, scale: 1.01 }}
       transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-      className="coming-card group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5"
+      className={`coming-card group relative overflow-hidden rounded-2xl border bg-white p-5 ${
+        isPro ? 'border-amber-200/80' : 'border-neutral-200'
+      }`}
     >
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div
+        className={`pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${
+          isPro ? 'to-amber-500/5' : 'to-primary/5'
+        }`}
+      />
       <div className="relative">
         <div className="flex items-start justify-between gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 transition-colors duration-300 group-hover:border-primary/25 group-hover:bg-primary-pale">
-            <Icon className="text-lg text-neutral-600 transition-colors group-hover:text-primary" />
+          <span
+            className={`flex h-10 w-10 items-center justify-center rounded-lg border bg-neutral-50 transition-colors duration-300 ${
+              isPro
+                ? 'border-amber-200 group-hover:border-amber-300 group-hover:bg-amber-50'
+                : 'border-neutral-200 group-hover:border-primary/25 group-hover:bg-primary-pale'
+            }`}
+          >
+            <Icon
+              className={`text-lg transition-colors ${
+                isPro
+                  ? 'text-amber-700 group-hover:text-amber-800'
+                  : 'text-neutral-600 group-hover:text-primary'
+              }`}
+            />
           </span>
-          <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500 transition-colors group-hover:border-primary/20 group-hover:text-primary">
+          <span
+            className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+              isPro
+                ? 'border-amber-200 bg-amber-50 text-amber-800'
+                : 'border-neutral-200 bg-neutral-50 text-neutral-500 group-hover:border-primary/20 group-hover:text-primary'
+            }`}
+          >
             {item.phase}
           </span>
         </div>
@@ -211,15 +226,23 @@ function ComingCard({ item, index }) {
         <h3 className="mt-4 text-[15px] font-semibold tracking-tight text-dark">{item.title}</h3>
         <p className="mt-1 text-[13px] text-neutral-500">{item.summary}</p>
 
-        {/* Demo preview — always visible, animates on hover */}
-        <div className="mt-4 rounded-xl border border-neutral-100 bg-neutral-50/80 p-3 transition-all duration-300 group-hover:border-primary/15 group-hover:bg-white group-hover:shadow-[0_8px_24px_rgba(13,92,46,0.08)]">
-          <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-neutral-400 group-hover:text-primary/70">
+        <div
+          className={`mt-4 rounded-xl border p-3 transition-all duration-300 group-hover:shadow-[0_8px_24px_rgba(13,92,46,0.08)] ${
+            isPro
+              ? 'border-amber-100 bg-amber-50/50 group-hover:border-amber-200/60 group-hover:bg-white'
+              : 'border-neutral-100 bg-neutral-50/80 group-hover:border-primary/15 group-hover:bg-white'
+          }`}
+        >
+          <p
+            className={`mb-2 text-[9px] font-semibold uppercase tracking-widest ${
+              isPro ? 'text-amber-600/80' : 'text-neutral-400 group-hover:text-primary/70'
+            }`}
+          >
             Preview
           </p>
           {item.demo}
         </div>
 
-        {/* Extra detail slides in on hover */}
         <motion.p
           initial={false}
           className="mt-3 max-h-0 overflow-hidden text-[12px] leading-relaxed text-neutral-500 opacity-0 transition-all duration-300 group-hover:max-h-24 group-hover:opacity-100"
@@ -227,9 +250,13 @@ function ComingCard({ item, index }) {
           {item.detail}
         </motion.p>
 
-        <div className="mt-3 flex items-center gap-1.5 text-[11px] font-medium text-primary opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <div
+          className={`mt-3 flex items-center gap-1.5 text-[11px] font-medium opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${
+            isPro ? 'text-amber-800' : 'text-primary'
+          }`}
+        >
           <RiSparklingLine size={14} />
-          Coming soon
+          {item.footer}
         </div>
       </div>
     </motion.article>
@@ -255,8 +282,9 @@ export default function ComingSoon() {
             What we&apos;re building next
           </h2>
           <p className="mt-4 text-[15px] leading-relaxed text-neutral-500">
-            Hover any card for a live-style preview and full description. Each feature
-            is designed for civic impact at scale — not just demo day.
+            Conversation memory, feedback, and admin analytics are already live in the
+            web app. Hover any card for a preview — Pro features are separate from free
+            citizen chat.
           </p>
         </motion.div>
 

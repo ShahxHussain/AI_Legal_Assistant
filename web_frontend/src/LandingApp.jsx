@@ -8,6 +8,7 @@ import Models from './components/Models';
 import About from './components/About';
 import Impact from './components/Impact';
 import Roadmap from './components/Roadmap';
+import Pro from './components/Pro';
 import ComingSoon from './components/ComingSoon';
 import Download from './components/Download';
 import Footer from './components/Footer';
@@ -34,6 +35,8 @@ export default function LandingApp() {
         <Impact />
         <SectionDivider />
         <Roadmap />
+        <SectionDivider />
+        <Pro />
         <SectionDivider />
         <ComingSoon />
         <SectionDivider />

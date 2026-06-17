@@ -2,7 +2,7 @@
 
 <span style="color: red;">If the AI sounded like it was arguing with itself in the demo, that was my headset echoing, not Court Companion having an existential crisis — my headset turned the legal assistant into a very confused echo chamber :)</span>
 
-### `LIVE Here:` https://ai-legal-assistant-seven.vercel.app/
+### `LIVE Here:` https://ai-legal-assistant-seven.vercel.app/ (landing) · https://ai-legal-assistant-two.vercel.app/ (web app)
 
 ---
 

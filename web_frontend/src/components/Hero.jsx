@@ -1,12 +1,13 @@
 import { motion } from 'framer-motion';
 import {
-  RiDownloadLine,
   RiArrowRightLine,
   RiMapPinLine,
   RiTranslate2,
   RiSmartphoneLine,
   RiBookOpenLine,
   RiExternalLinkLine,
+  RiDownloadLine,
+  RiVipCrownLine,
 } from 'react-icons/ri';
 import { SITE } from '../config/site';
 import { fadeUp, GridBackdrop } from '../utils/motion';
@@ -14,7 +15,7 @@ import { fadeUp, GridBackdrop } from '../utils/motion';
 const trust = [
   { icon: RiBookOpenLine, label: 'PPC · CrPC · ATA' },
   { icon: RiTranslate2, label: '7 languages' },
-  { icon: RiSmartphoneLine, label: 'Android + Web' },
+  { icon: RiSmartphoneLine, label: 'Web + Android' },
 ];
 
 export default function Hero() {
@@ -59,7 +60,9 @@ export default function Hero() {
             Court Companion answers questions about Pakistani criminal law — FIR, bail,
             PPC and CrPC — grounded in real statute text via RAG, powered by{' '}
             <span className="font-medium text-dark">Meta Llama</span> on{' '}
-            <span className="font-medium text-dark">Together.ai</span>.
+            <span className="font-medium text-dark">Together.ai</span>. Use it in the
+            browser or on Android — plus{' '}
+            <span className="font-medium text-dark">Court Companion Pro</span> for lawyers.
           </motion.p>
 
           <motion.div
@@ -70,17 +73,26 @@ export default function Hero() {
             className="mt-9 flex flex-wrap items-center gap-3"
           >
             <a
-              href={SITE.apkUrl}
+              href={SITE.webAppUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-green px-6 py-3"
             >
-              <RiDownloadLine size={16} />
-              Download APK
-            </a>
-            <a href="#how-it-works" className="btn-secondary px-6 py-3">
-              How it works
+              Open web app
               <RiArrowRightLine size={16} />
+            </a>
+            <a href="#pro" className="btn-pro-outline px-5 py-3">
+              <RiVipCrownLine size={16} />
+              Court Companion Pro
+            </a>
+            <a
+              href={SITE.apkUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary px-5 py-3"
+            >
+              <RiDownloadLine size={16} />
+              APK
             </a>
             <a
               href={SITE.githubUrl}
@@ -118,7 +130,13 @@ export default function Hero() {
           className="relative mx-auto w-full max-w-[320px]"
         >
           <div className="absolute -inset-8 rounded-3xl bg-gradient-to-b from-primary/10 to-transparent blur-2xl" />
-          <div className="relative rounded-2xl border border-neutral-200 bg-white p-1 shadow-[0_20px_50px_rgba(0,0,0,0.08)] ring-1 ring-primary/5">
+          <a
+            href={SITE.webAppUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative block rounded-2xl border border-neutral-200 bg-white p-1 shadow-[0_20px_50px_rgba(0,0,0,0.08)] ring-1 ring-primary/5 transition hover:ring-primary/20"
+            aria-label="Open Court Companion web app"
+          >
             <div className="rounded-xl border border-neutral-100 bg-neutral-50 p-4">
               <div className="mb-4 flex items-center justify-between border-b border-neutral-200/80 pb-3">
                 <div className="flex items-center gap-2">
@@ -147,8 +165,11 @@ export default function Hero() {
                   </span>
                 </div>
               </div>
+              <p className="mt-4 text-center text-[11px] font-medium text-primary">
+                Tap to open web app →
+              </p>
             </div>
-          </div>
+          </a>
         </motion.div>
       </div>
     </section>

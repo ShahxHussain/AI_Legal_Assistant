@@ -3,6 +3,8 @@ import {
   RiGithubLine,
   RiArrowRightUpLine,
   RiDownloadLine,
+  RiGlobalLine,
+  RiVipCrownLine,
 } from 'react-icons/ri';
 import { SITE, FOUNDER } from '../config/site';
 
@@ -11,11 +13,12 @@ const links = [
   { href: '#solution', label: 'Solution' },
   { href: '#how-it-works', label: 'How it works' },
   { href: '#features', label: 'Features' },
+  { href: '#pro', label: 'Court Companion Pro' },
   { href: '#about', label: 'About' },
   { href: '#impact', label: 'Impact' },
   { href: '#roadmap', label: 'Shipped' },
   { href: '#coming-soon', label: 'Coming soon' },
-  { href: '#download', label: 'Download' },
+  { href: '#get-app', label: 'Get app' },
 ];
 
 export default function Footer() {
@@ -31,7 +34,7 @@ export default function Footer() {
           </div>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-neutral-500">
             AI legal multilingual assistant for Pakistan. Meta Llama via Together.ai.
-            Built by {FOUNDER.name}.
+            Web, Android, and Court Companion Pro for lawyers. Built by {FOUNDER.name}.
           </p>
           <p className="mt-6 text-[12px] text-neutral-600">
             AI for Civic Innovation Hackathon 2026
@@ -59,13 +62,13 @@ export default function Footer() {
           <ul className="mt-4 space-y-3">
             <li>
               <a
-                href={SITE.githubUrl}
+                href={SITE.webAppUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm text-neutral-400 transition hover:text-white"
               >
-                <RiGithubLine size={16} />
-                GitHub
+                <RiGlobalLine size={16} />
+                Web app
                 <RiArrowRightUpLine size={14} />
               </a>
             </li>
@@ -78,6 +81,35 @@ export default function Footer() {
               >
                 <RiDownloadLine size={16} />
                 Download APK
+              </a>
+            </li>
+            <li>
+              <a
+                href="#pro"
+                className="inline-flex items-center gap-1.5 text-sm text-neutral-400 transition hover:text-white"
+              >
+                <RiVipCrownLine size={16} />
+                Court Companion Pro
+              </a>
+            </li>
+            <li>
+              <a
+                href={SITE.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-neutral-400 transition hover:text-white"
+              >
+                <RiGithubLine size={16} />
+                GitHub
+                <RiArrowRightUpLine size={14} />
+              </a>
+            </li>
+            <li>
+              <a
+                href={SITE.adminPath}
+                className="inline-flex items-center gap-1.5 text-sm text-neutral-400 transition hover:text-white"
+              >
+                Admin dashboard
               </a>
             </li>
             <li>

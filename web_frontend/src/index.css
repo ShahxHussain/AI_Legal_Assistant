@@ -133,6 +133,19 @@ body {
   100% { background-position: 200% 0; }
 }
 
+.pro-cta-card {
+  background: linear-gradient(135deg, #0f172a 0%, #134e4a 45%, #0d5c2e 100%);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+}
+
+.pro-surface {
+  background: linear-gradient(160deg, #0f172a 0%, #0d5c2e 100%);
+}
+
+.btn-pro-outline {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg border border-amber-400/40 bg-amber-50 px-5 py-2.5 text-sm font-medium text-amber-900 transition-all duration-200 hover:border-amber-500/60 hover:bg-amber-100;
+}
+
 .text-shimmer {
   background: linear-gradient(90deg, #0a0a0a 0%, #525252 50%, #0a0a0a 100%);
   background-size: 200% auto;
@@ -141,3 +154,4 @@ body {
   -webkit-text-fill-color: transparent;
   animation: shimmer 6s linear infinite;
 }
+
