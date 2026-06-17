@@ -6,13 +6,21 @@ import '../theme/app_theme.dart';
 import 'source_detail_sheet.dart';
 
 class SourceChipsRow extends StatelessWidget {
-  const SourceChipsRow({super.key, required this.sources});
+  const SourceChipsRow({
+    super.key,
+    required this.sources,
+    this.maxVisible = 3,
+  });
 
   final List<LegalSource> sources;
+  final int maxVisible;
 
   @override
   Widget build(BuildContext context) {
     if (sources.isEmpty) return const SizedBox.shrink();
+    final visibleCount = maxVisible.clamp(1, sources.length);
+    final visibleSources = sources.take(visibleCount).toList();
+    final hiddenCount = sources.length - visibleSources.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,7 +56,7 @@ class SourceChipsRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                '${sources.length}',
+                '${visibleSources.length}/${sources.length}',
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -62,7 +70,7 @@ class SourceChipsRow extends StatelessWidget {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: sources.map((source) {
+          children: visibleSources.map((source) {
             return Material(
               color: Colors.transparent,
               child: InkWell(
@@ -111,6 +119,16 @@ class SourceChipsRow extends StatelessWidget {
             );
           }).toList(),
         ),
+        if (hiddenCount > 0) ...[
+          const SizedBox(height: 8),
+          Text(
+            '+$hiddenCount more source${hiddenCount == 1 ? '' : 's'} available',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              color: AppColors.muted,
+            ),
+          ),
+        ],
         const SizedBox(height: 6),
         Text(
           'Tap a source to view the full statute excerpt',
