@@ -26,6 +26,13 @@ flutter --version
 flutter config --enable-web --no-analytics
 flutter precache --web
 flutter pub get
+echo "==> Compiling web release (2–5 min)..."
 flutter build web --release --dart-define="API_BASE_URL=$API_URL"
 
-echo "==> Build complete: $ROOT_DIR/build/web"
+if [[ ! -f build/web/index.html ]]; then
+  echo "==> ERROR: build/web/index.html missing — flutter build web failed"
+  exit 1
+fi
+
+echo "==> Build complete. Output:"
+ls -la build/web | head -20
