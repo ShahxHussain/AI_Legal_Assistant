@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-FLUTTER_VERSION="${FLUTTER_VERSION:-stable}"
+FLUTTER_VERSION="${FLUTTER_VERSION:-3.29.3}"
 FLUTTER_DIR="${FLUTTER_DIR:-$ROOT_DIR/.flutter}"
 API_URL="${API_BASE_URL:-https://ai-legal-assistant-fes8.onrender.com}"
 

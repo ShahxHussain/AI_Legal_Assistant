@@ -54,7 +54,7 @@ Each push to the connected branch rebuilds and deploys automatically.
 | Issue | Fix |
 |-------|-----|
 | `bash: scripts/vercel-build.sh: Permission denied` | Script must be executable in git: `git update-index --chmod=+x Frontend/scripts/vercel-build.sh` |
-| Build timeout | Hobby limit ~45 min — Flutter web usually finishes in &lt;15 min |
+| Build fails on `google_fonts` / `FontWeight` | Vercel uses pinned Flutter **3.29.3** in `vercel-build.sh` — do not set `FLUTTER_VERSION=stable` unless you upgrade `google_fonts` for Dart 3.12+ |
 | API offline in browser | Set `API_BASE_URL` env var; wake Render with `/health` first |
 | Wrong root directory | Must be **`Frontend`**, not repo root |
 
