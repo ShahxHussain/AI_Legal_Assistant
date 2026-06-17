@@ -10,7 +10,7 @@ void main() {
     expect(find.text('Type your question'), findsOneWidget);
     expect(find.text('Ask by voice'), findsOneWidget);
     expect(find.text('Court Companion Pro'), findsOneWidget);
-    expect(find.text('BETA'), findsOneWidget);
+    expect(find.text('Pro'), findsOneWidget);
     expect(find.text('Analyze a document'), findsNothing);
   });
 }
