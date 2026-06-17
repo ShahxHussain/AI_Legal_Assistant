@@ -42,6 +42,13 @@ class Settings(BaseSettings):
     upload_max_bytes: int = 5 * 1024 * 1024
     upload_max_chars: int = 14_000
 
+    # Supabase (Module 1 + 2) — see docs/SUPABASE_SETUP.md
+    supabase_url: str = ""
+    supabase_service_role_key: str = ""
+    conversation_history_limit: int = 10
+    clarifying_enabled: bool = True
+    admin_api_key: str = ""
+
     assistant_name: str = "Court Companion | AI Legal Bilingual Assistant"
     disclaimer: str = (
         "Yeh sirf general legal maloomat hai, legal advice nahi. "
@@ -64,6 +71,15 @@ class Settings(BaseSettings):
             return False
         placeholders = {"your_together_api_key_here", "your_key_here", "changeme"}
         return key.lower() not in placeholders
+
+    @property
+    def supabase_configured(self) -> bool:
+        url = self.supabase_url.strip()
+        key = self.supabase_service_role_key.strip()
+        if not url or not key:
+            return False
+        placeholders = {"your_key_here", "changeme", "eyj..."}
+        return key.lower() not in placeholders and "your_project" not in url.lower()
 
 
 settings = Settings()

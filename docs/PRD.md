@@ -1,15 +1,15 @@
 # Product Requirements Document (PRD)
 
 **Product:** Court Companion – AI Legal Assistant  
-**Version:** 1.0 (Hackathon MVP)  
-**Last updated:** 2026-06-10  
+**Version:** 1.1 (Post-MVP updates)  
+**Last updated:** 2026-06-17  
 **Hackathon:** AI for Civic Innovation 2026 — Theme 3: Open Data & Access to Information
 
 ---
 
 ## 1. Executive Summary
 
-Court Companion is an AI-powered legal information assistant that helps Pakistani citizens understand criminal law in plain language. Users ask questions via a Flutter mobile app; a deployed backend retrieves relevant statute text and generates simplified, source-grounded answers using RAG.
+Court Companion is an AI-powered legal information assistant that helps Pakistani citizens navigate **real criminal-law situations** — not only definitions. Users describe what happened via a Flutter mobile app; the backend retrieves relevant statute text and generates structured, source-grounded walkthroughs (law → procedure → rights → next steps) using RAG.
 
 **MVP goal (by June 13, 2026):** A working demo — Flutter APK connected to a live FastAPI backend that answers criminal-law questions grounded in PPC, CrPC, and ATA sources.
 
@@ -40,6 +40,7 @@ Millions of citizens in Pakistan cannot easily understand:
 |------|-------------|
 | **Accessibility** | Make public legal information reachable via a mobile app |
 | **Understandability** | Translate statute language into citizen-friendly explanations |
+| **Scenario guidance** | Walk users through multi-fact situations: applicable law, procedure, rights, next steps |
 | **Trust** | Ground every answer in retrieved legal text with source citations |
 | **Demo readiness** | Ship a functional prototype for Round 2 screening (June 13) |
 
@@ -76,7 +77,7 @@ Millions of citizens in Pakistan cannot easily understand:
 
 | ID | Feature | Priority | Description |
 |----|---------|----------|-------------|
-| F1 | Legal Q&A (text) | P0 | User types a question; receives a simplified answer |
+| F1 | Legal Q&A + scenarios (text) | P0 | User describes a question or real situation; receives a structured, source-grounded walkthrough |
 | F2 | RAG retrieval | P0 | Answers grounded in PPC, CrPC, ATA PDF corpus |
 | F3 | Source citations | P0 | Response includes statute/source references |
 | F4 | REST API | P0 | `GET /health`, `POST /ask` on deployed backend |
@@ -209,9 +210,19 @@ Questions to validate during demo and judging:
 
 ## 12. Future Roadmap (Post-MVP)
 
-- Urdu language support
-- Voice input/output (STT/TTS)
-- Firebase auth and chat history
+### Shipped after initial MVP
+
+- 7-language text chat + streaming
+- English voice assistant
+- Home: **Ask in chat** · **Ask by voice** · **Court Companion Pro** (beta info)
+- Chat history sidebar; session follow-up via `conversation_id`
+- Answer feedback (👍/👎); admin dashboard (web)
+- Document analysis via chat attach + `/analyze-document`
+
+### Planned
+
+- **Court Companion Pro** — lawyer case workspace, agentic clarifying questions, case-law RAG ([`COURT_COMPANION_PRO.md`](./COURT_COMPANION_PRO.md))
+- Voice in all 7 languages
 - Legal resource downloads
 - Lawyer recommendations by category
 - Constitutional, civil, and family law expansion
@@ -232,5 +243,7 @@ Questions to validate during demo and judging:
 
 - [README.md](../README.md) — Project overview
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — Technical design
+- [PRODUCT_MODULES.md](./PRODUCT_MODULES.md) — Smarter conversations + admin
+- [COURT_COMPANION_PRO.md](./COURT_COMPANION_PRO.md) — Professional case workspace (planned)
 - [data/README.md](../data/README.md) — Knowledge base inventory
 - [Hackathon_updates/HACKATHON_THEME.md](../Hackathon_updates/HACKATHON_THEME.md) — Theme alignment

@@ -21,12 +21,16 @@ class ApiService {
   final http.Client _client;
 
   Future<bool> checkHealth() async {
-    final response = await _client
-        .get(Uri.parse(ApiConfig.healthUrl))
-        .timeout(const Duration(seconds: 15));
-    if (response.statusCode != 200) return false;
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    return json['index_loaded'] == true;
+    try {
+      final response = await _client
+          .get(Uri.parse(ApiConfig.healthUrl))
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) return false;
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      return json['status'] == 'ok' || json['index_loaded'] == true;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Streams NDJSON events from POST /ask/stream:
@@ -35,14 +39,24 @@ class ApiService {
     String question, {
     String language = 'urdu_script',
     bool voiceMode = false,
+    String? deviceId,
+    String? conversationId,
   }) async* {
+    final body = <String, dynamic>{
+      'question': question,
+      'language': language,
+      'voice_mode': voiceMode,
+    };
+    if (deviceId != null && deviceId.isNotEmpty) {
+      body['device_id'] = deviceId;
+    }
+    if (conversationId != null && conversationId.isNotEmpty) {
+      body['conversation_id'] = conversationId;
+    }
+
     final request = http.Request('POST', Uri.parse(ApiConfig.askStreamUrl))
       ..headers['Content-Type'] = 'application/json'
-      ..body = jsonEncode({
-        'question': question,
-        'language': language,
-        'voice_mode': voiceMode,
-      });
+      ..body = jsonEncode(body);
 
     final response =
         await _client.send(request).timeout(const Duration(seconds: 120));
@@ -135,6 +149,103 @@ class ApiService {
     } catch (_) {}
 
     throw ApiException(detail, statusCode: response.statusCode);
+  }
+
+  Future<String> createConversation({
+    required String deviceId,
+    String language = 'urdu_script',
+  }) async {
+    final response = await _client
+        .post(
+          Uri.parse('${ApiConfig.baseUrl}/conversations'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'device_id': deviceId, 'language': language}),
+        )
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode != 200) {
+      throw ApiException('Could not start conversation (${response.statusCode})');
+    }
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return json['id'] as String;
+  }
+
+  Future<List<Map<String, dynamic>>> listConversations(String deviceId) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}/conversations').replace(
+      queryParameters: {'device_id': deviceId},
+    );
+    final response = await _client.get(uri).timeout(const Duration(seconds: 20));
+    if (response.statusCode != 200) return [];
+    final list = jsonDecode(response.body) as List<dynamic>;
+    return list.cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>> getConversation({
+    required String conversationId,
+    required String deviceId,
+  }) async {
+    final uri =
+        Uri.parse('${ApiConfig.baseUrl}/conversations/$conversationId').replace(
+      queryParameters: {'device_id': deviceId},
+    );
+    final response = await _client.get(uri).timeout(const Duration(seconds: 20));
+    if (response.statusCode != 200) {
+      throw ApiException('Could not load conversation (${response.statusCode})');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<void> deleteConversation({
+    required String conversationId,
+    required String deviceId,
+  }) async {
+    final uri =
+        Uri.parse('${ApiConfig.baseUrl}/conversations/$conversationId').replace(
+      queryParameters: {'device_id': deviceId},
+    );
+    final response =
+        await _client.delete(uri).timeout(const Duration(seconds: 20));
+    if (response.statusCode != 200) {
+      throw ApiException('Could not delete conversation (${response.statusCode})');
+    }
+  }
+
+  Future<void> submitFeedback({
+    required String messageId,
+    required String deviceId,
+    required String rating,
+    String? conversationId,
+    String language = 'urdu_script',
+    String channel = 'chat',
+  }) async {
+    final body = <String, dynamic>{
+      'message_id': messageId,
+      'device_id': deviceId,
+      'rating': rating,
+      'language': language,
+      'channel': channel,
+    };
+    if (conversationId != null && conversationId.isNotEmpty) {
+      body['conversation_id'] = conversationId;
+    }
+
+    final response = await _client
+        .post(
+          Uri.parse(ApiConfig.feedbackUrl),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 20));
+
+    if (response.statusCode != 204 && response.statusCode != 200) {
+      String detail = 'Feedback failed (${response.statusCode})';
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          detail = decoded['detail']?.toString() ?? detail;
+        }
+      } catch (_) {}
+      throw ApiException(detail, statusCode: response.statusCode);
+    }
   }
 
   void dispose() => _client.close();

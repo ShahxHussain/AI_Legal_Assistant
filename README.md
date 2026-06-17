@@ -13,7 +13,7 @@ An AI-powered legal assistant that helps Pakistani citizens understand laws, rig
 | **7 Languages** | English · Urdu · Roman Urdu · Pashto · Punjabi · Sindhi · Balochi |
 | **Legal corpus** | PPC + CrPC + ATA — **983 indexed chunks** |
 | **Platforms** | Android APK + Web |
-| **Modes** | Text chat + Voice assistant (English voice; more languages coming) |
+| **Modes** | **Ask in chat** · **Ask by voice** · **Court Companion Pro** (beta info) |
 | **Live API** | [ai-legal-assistant-fes8.onrender.com](https://ai-legal-assistant-fes8.onrender.com/health) |
 
 ---
@@ -39,10 +39,10 @@ An AI-powered legal assistant that helps Pakistani citizens understand laws, rig
 
 ## Overview
 
-Court Companion reduces barriers to legal information by making laws, legal rights, and legal procedures easier to understand for people without legal expertise.
+Court Companion reduces barriers to legal information by helping citizens understand **real situations** — not only definitions — including which laws apply, criminal procedure, their rights, and what to do next.
 
 **Initial focus:** Criminal law awareness (PPC, CrPC, ATA)  
-**Core approach:** Retrieval-Augmented Generation (RAG) — responses are grounded in verified statute text, not generic AI guesses.
+**Core approach:** Retrieval-Augmented Generation (RAG) — multi-step scenario reasoning grounded in verified statute text, not generic AI guesses.
 
 ---
 
@@ -66,11 +66,13 @@ Court Companion provides a **multilingual** AI legal assistant that:
 
 | Capability | Description |
 |------------|-------------|
+| **Scenario reasoning** | Walks through messy multi-fact situations: applicable law → procedure → rights → next steps |
 | **7-language Q&A** | Answers in English, Urdu (script), Roman Urdu, Pashto, Punjabi, Sindhi, Balochi |
 | **Grounded answers** | Retrieves relevant PPC / CrPC / ATA sections before generating a reply |
 | **Plain-language explanations** | AI simplifies statute text for ordinary citizens |
 | **Text + voice** | Type or speak your question; hear answers as they stream |
-| **Document upload** | Attach PDF/TXT for case-specific analysis |
+| **Home entry points** | Ask in chat · Ask by voice · Court Companion Pro (beta) |
+| **Document analysis** | Optional PDF/TXT attach inside chat (not a separate home button); `POST /analyze-document` on API |
 | **Source citations** | Shows which legal sources informed each answer |
 
 ---
@@ -91,6 +93,7 @@ Court Companion provides a **multilingual** AI legal assistant that:
 - NGOs
 - Community support groups
 - Legal researchers
+- **Lawyers & advocates** — future **Court Companion Pro** workspace ([design doc](docs/COURT_COMPANION_PRO.md); beta info screen in app)
 
 ---
 
@@ -144,14 +147,16 @@ User Question
 
 - **Web** (Chrome / Edge)
 - **Android APK** (release build connects to Render automatically)
-- Streaming chat UI, language picker, document attach, API status badge
+- **Home screen** — Ask in chat · Ask by voice · Court Companion Pro (beta)
+- Streaming chat UI, chat history sidebar, language picker, optional document attach in chat, API status badge
+- **Court Companion Pro** — beta product info screen ([`docs/COURT_COMPANION_PRO.md`](docs/COURT_COMPANION_PRO.md)); full workspace coming later
 
 #### Backend API (deployed)
 
 - `GET /health` — index & LLM status
 - `POST /ask` — legal Q&A
 - `POST /ask/stream` — streaming NDJSON answers
-- `POST /analyze-document` — PDF/TXT analysis
+- `POST /analyze-document` — PDF/TXT analysis (chat attachment or direct API; not a home-screen entry)
 
 ---
 
@@ -159,10 +164,9 @@ User Question
 
 | Module | Description |
 |--------|-------------|
-| **Admin dashboard** | Usage analytics, language breakdown, impact charts |
-| **Feedback (👍 / 👎)** | Per-answer helpfulness ratings |
-| **Voice — all 7 languages** | STT + TTS for every supported language |
-| **Conversational memory** | Chat history, follow-up questions, agentic clarification |
+| **Smarter conversations** | Multi-turn history, agentic follow-ups, scenario reasoning — Module 1 in [`docs/PRODUCT_MODULES.md`](docs/PRODUCT_MODULES.md) |
+| **Court Companion Pro** | Professional case workspace for lawyers — case upload, agentic follow-ups, case-law RAG — [`docs/COURT_COMPANION_PRO.md`](docs/COURT_COMPANION_PRO.md) (beta info in app) |
+| **Admin dashboard** | 👍/👎 feedback, usage analytics, top topics, impact KPIs — Module 2 in [`docs/PRODUCT_MODULES.md`](docs/PRODUCT_MODULES.md) |
 | **Legal Resource Center** | Downloadable FIR templates, complaint forms, rights guides |
 | **Lawyer Recommendation** | Category-based lawyer suggestions |
 | **Firebase Auth + history** | Saved sessions for authenticated users |
@@ -267,7 +271,7 @@ See also: [`Frontend/README.md`](Frontend/README.md) · [`SUBMISSION_SCREENING.m
 ## Future Enhancements
 
 - Full voice support in all 7 languages
-- Agentic follow-up questions and session memory
+- **Product modules** — smarter conversations + admin impact dashboard ([design doc](docs/PRODUCT_MODULES.md)) + **Court Companion Pro** ([design doc](docs/COURT_COMPANION_PRO.md))
 - Admin analytics and citizen feedback loop
 - Open-source release with multi-deployment instances
 - Constitutional, civil, and family law expansion

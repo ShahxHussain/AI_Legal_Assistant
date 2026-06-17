@@ -5,11 +5,15 @@ import '../config/api_config.dart';
 import '../models/legal_source.dart';
 import '../services/api_service.dart';
 import '../services/assistant_stream.dart';
+import '../services/chat_session_store.dart';
+import '../services/device_identity.dart';
+import '../services/voice_locales.dart';
 import '../services/voice_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/api_status_badge.dart';
 import '../widgets/formatted_message.dart';
 import '../widgets/source_chips_row.dart';
+import '../widgets/urdu_voice_help_sheet.dart';
 import '../widgets/voice_language_picker.dart';
 
 enum _VoicePhase { idle, listening, thinking, speaking }
@@ -25,10 +29,13 @@ class VoiceScreen extends StatefulWidget {
 
 class _VoiceScreenState extends State<VoiceScreen> {
   final _api = ApiService();
+  final _session = ChatSessionStore();
   final _voice = VoiceService();
   final _scrollController = ScrollController();
 
   String _language = kVoiceDefaultLanguage;
+  String? _deviceId;
+  String? _conversationId;
   _VoicePhase _phase = _VoicePhase.idle;
   bool? _apiHealthy;
   bool _voiceReady = false;
@@ -50,7 +57,18 @@ class _VoiceScreenState extends State<VoiceScreen> {
     _init();
   }
 
+  @override
+  void dispose() {
+    _voice.stopListening();
+    _voice.stopSpeaking();
+    _api.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> _init() async {
+    _deviceId = await DeviceIdentity.ensureDeviceId();
+    _conversationId = await _session.getConversationId();
     await _checkApiHealth();
     await _initVoice(requestPermission: false);
   }
@@ -65,7 +83,33 @@ class _VoiceScreenState extends State<VoiceScreen> {
   }
 
   Future<void> _initVoice({required bool requestPermission}) async {
-    final result = await _voice.init(requestPermission: requestPermission);
+    final result = await _voice.init(
+      requestPermission: requestPermission,
+      language: _language,
+    );
+    if (!mounted) return;
+    setState(() {
+      _voiceReady = result.sttReady;
+      _micHint = result.sttReady ? null : result.hint;
+    });
+  }
+
+  Future<void> _onVoiceLanguageChanged(String code) async {
+    if (_phase == _VoicePhase.listening) {
+      await _voice.stopListening();
+    }
+    await _voice.stopSpeaking();
+
+    setState(() {
+      _language = code;
+      _phase = _VoicePhase.idle;
+      _liveTranscript = '';
+    });
+
+    final result = await _voice.init(
+      requestPermission: false,
+      language: code,
+    );
     if (!mounted) return;
     setState(() {
       _voiceReady = result.sttReady;
@@ -89,6 +133,9 @@ class _VoiceScreenState extends State<VoiceScreen> {
         return 'Speaking as the answer arrives…';
       case _VoicePhase.idle:
         if (_voiceReady) {
+          if (isUrduVoiceLanguage(_language)) {
+            return 'اردو میں بولیں — مکمل ہونے پر روکیں بٹن دبائیں';
+          }
           return 'Tap the microphone and ask your legal question';
         }
         return _micHint ??
@@ -169,6 +216,12 @@ class _VoiceScreenState extends State<VoiceScreen> {
         question: question,
         language: _language,
         voiceMode: true,
+        deviceId: _deviceId,
+        conversationId: _conversationId,
+        onConversationId: (id) {
+          if (id == null) return;
+          _conversationId = id;
+        },
         onMeta: (sources, disclaimer) {
           if (!mounted) return;
           setState(() {
@@ -198,12 +251,17 @@ class _VoiceScreenState extends State<VoiceScreen> {
         _answer = result.answer;
         _sources = result.sources;
         _disclaimer = result.disclaimer;
+        _conversationId = result.conversationId ?? _conversationId;
         _apiHealthy = true;
         if (_phase != _VoicePhase.speaking) {
           _phase = _VoicePhase.speaking;
         }
       });
       _scrollToBottom();
+
+      if (result.conversationId != null) {
+        await _session.setConversationId(result.conversationId);
+      }
 
       try {
         await _voice.finishStreamSpeech(result.answer);
@@ -241,15 +299,6 @@ class _VoiceScreenState extends State<VoiceScreen> {
   }
 
   @override
-  void dispose() {
-    _voice.stopListening();
-    _voice.stopSpeaking();
-    _api.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -258,8 +307,18 @@ class _VoiceScreenState extends State<VoiceScreen> {
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_rounded),
-          style: IconButton.styleFrom(foregroundColor: AppColors.textDark),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.secondary,
+          ),
+          style: IconButton.styleFrom(
+            backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
+            foregroundColor: AppColors.secondary,
+            minimumSize: const Size(40, 40),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
         ),
         title: Text(
           'Voice Assistant',
@@ -270,10 +329,28 @@ class _VoiceScreenState extends State<VoiceScreen> {
           ),
         ),
         actions: [
+          if (isUrduVoiceLanguage(_language))
+            IconButton(
+              tooltip: 'Urdu voice help',
+              onPressed: () => UrduVoiceHelpSheet.show(context),
+              icon: const Icon(
+                Icons.info_outline_rounded,
+                color: AppColors.secondary,
+              ),
+              style: IconButton.styleFrom(
+                backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
+                foregroundColor: AppColors.secondary,
+                minimumSize: const Size(40, 40),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
           Center(
             child: VoiceLanguagePicker(
+              compact: true,
               value: _language,
-              onChanged: (v) => setState(() => _language = v),
+              onChanged: (v) => _onVoiceLanguageChanged(v),
             ),
           ),
           Tooltip(
@@ -407,7 +484,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'English voice · Other languages coming soon',
+                  'English & Urdu voice · Tap (i) for optional help',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

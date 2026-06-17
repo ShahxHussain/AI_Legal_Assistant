@@ -6,11 +6,17 @@ import '../theme/app_theme.dart';
 import 'formatted_message.dart';
 import 'loading_answer.dart';
 import 'source_chips_row.dart';
+import 'answer_feedback_bar.dart';
 
 class ChatBubble extends StatelessWidget {
-  const ChatBubble({super.key, required this.message});
+  const ChatBubble({
+    super.key,
+    required this.message,
+    this.onFeedback,
+  });
 
   final ChatMessage message;
+  final ValueChanged<String>? onFeedback;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +91,16 @@ class ChatBubble extends StatelessWidget {
                         Divider(color: AppColors.border, height: 1),
                         const SizedBox(height: 16),
                         SourceChipsRow(sources: message.sources),
+                      ],
+                      if (!message.isLoading &&
+                          !isError &&
+                          message.canReceiveFeedback &&
+                          onFeedback != null) ...[
+                        const SizedBox(height: 16),
+                        AnswerFeedbackBar(
+                          selectedRating: message.feedbackRating,
+                          onRate: onFeedback!,
+                        ),
                       ],
                       if (!message.isLoading &&
                           message.disclaimer != null &&

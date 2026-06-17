@@ -3,6 +3,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import 'voice_locales.dart';
 import 'voice_stream_speaker.dart';
 import 'voice_tts_platform.dart';
 
@@ -30,18 +31,37 @@ class VoiceService {
   bool _resuming = false;
   String _dictationBuffer = '';
   void Function(String text, bool isFinal)? _wordsHandler;
-  String _localeId = 'en_US';
+  String _voiceLanguage = kVoiceDefaultLanguage;
+  String _localeId = sttLocaleForVoiceLanguage(kVoiceDefaultLanguage);
 
   bool get isSttReady => _sttReady;
   bool get isTtsReady => _ttsReady;
   bool get isListening => _stt.isListening;
   bool get isStreamSpeaking => _streamSpeaker.hasStarted;
   String? get lastHint => _lastHint;
+  String get voiceLanguage => _voiceLanguage;
 
-  Future<VoiceInitResult> init({bool requestPermission = false}) async {
+  Future<void> configureLanguage(String backendLanguageCode) async {
+    if (!kVoiceEnabledLanguages.contains(backendLanguageCode)) {
+      backendLanguageCode = kVoiceDefaultLanguage;
+    }
+    _voiceLanguage = backendLanguageCode;
+    _localeId = sttLocaleForVoiceLanguage(backendLanguageCode);
+
+    if (_ttsReady) {
+      final ttsLocale = ttsLocaleForVoiceLanguage(backendLanguageCode);
+      await _tts.setLanguage(ttsLocale);
+    }
+  }
+
+  Future<VoiceInitResult> init({
+    bool requestPermission = false,
+    String language = kVoiceDefaultLanguage,
+  }) async {
     _lastHint = null;
+    await configureLanguage(language);
 
-    if (requestPermission && !kIsWeb) { 
+    if (requestPermission && !kIsWeb) {
       final mic = await Permission.microphone.request();
       if (!mic.isGranted) {
         _lastHint =
@@ -85,12 +105,14 @@ class VoiceService {
               'Windows Settings → Privacy → Microphone, then tap Retry.';
         }
       }
+
     } catch (e) {
       _lastHint = 'Could not start speech recognition: $e';
       _sttReady = false;
     }
 
-    _ttsReady = await _tts.init();
+    final ttsLocale = ttsLocaleForVoiceLanguage(_voiceLanguage);
+    _ttsReady = await _tts.init(language: ttsLocale);
 
     final sttReady = _sttReady || (kIsWeb && requestPermission);
 
@@ -122,17 +144,20 @@ class VoiceService {
 
   Future<void> startListening({
     required void Function(String text, bool isFinal) onWords,
-    String localeId = 'en_US',
+    String? localeId,
   }) async {
     await stopListening();
 
     if (!_sttReady) {
-      final result = await init(requestPermission: true);
+      final result = await init(
+        requestPermission: true,
+        language: _voiceLanguage,
+      );
       if (!result.sttReady) return;
     }
 
     _wordsHandler = onWords;
-    _localeId = localeId;
+    _localeId = localeId ?? sttLocaleForVoiceLanguage(_voiceLanguage);
     _keepListening = true;
     _dictationBuffer = '';
 

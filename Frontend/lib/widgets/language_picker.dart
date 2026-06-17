@@ -22,20 +22,45 @@ String languageLabel(String code) {
       .$2;
 }
 
+/// Short label for compact app-bar picker (avoids overflow on narrow screens).
+String languageShortLabel(String code) {
+  switch (code) {
+    case 'english':
+      return 'EN';
+    case 'urdu_script':
+      return 'اردو';
+    case 'roman_urdu':
+      return 'RU';
+    case 'pashto':
+      return 'پښتو';
+    case 'punjabi':
+      return 'پنج';
+    case 'sindhi':
+      return 'سن';
+    case 'balochi':
+      return 'بلو';
+    default:
+      return 'EN';
+  }
+}
+
 /// Pill-style popup selector for the assistant's response language.
 class LanguagePicker extends StatelessWidget {
   const LanguagePicker({
     super.key,
     required this.value,
     required this.onChanged,
+    this.compact = false,
   });
 
   final String value;
   final ValueChanged<String> onChanged;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final label = languageLabel(value);
+    final short = languageShortLabel(value);
 
     return PopupMenuButton<String>(
       tooltip: 'Response language',
@@ -70,7 +95,10 @@ class LanguagePicker extends StatelessWidget {
         );
       }).toList(),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 8 : 12,
+          vertical: compact ? 6 : 7,
+        ),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
@@ -81,17 +109,32 @@ class LanguagePicker extends StatelessWidget {
           children: [
             const Icon(Icons.translate_rounded,
                 size: 15, color: AppColors.secondary),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textDark,
+            if (!compact) ...[
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
               ),
+            ] else ...[
+              const SizedBox(width: 4),
+              Text(
+                short,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ],
+            Icon(
+              Icons.expand_more_rounded,
+              size: compact ? 14 : 16,
+              color: AppColors.muted,
             ),
-            const Icon(Icons.expand_more_rounded,
-                size: 16, color: AppColors.muted),
           ],
         ),
       ),

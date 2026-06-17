@@ -1,15 +1,17 @@
 # Architecture — Court Companion
 
-**Version:** 1.0 (Hackathon MVP)  
-**Last updated:** 2026-06-10
+**Version:** 1.1  
+**Last updated:** 2026-06-17
 
 ---
 
 ## 1. Overview
 
-Court Companion is a **stateless, RAG-backed legal Q&A system**. A Flutter mobile client sends questions to a deployed FastAPI backend. The backend retrieves relevant statute chunks from a pre-built FAISS index and uses an external LLM API to generate simplified answers with source citations.
+Court Companion is a **RAG-backed legal assistant** for Pakistani criminal law. A Flutter client sends questions and **real-world scenarios** to a FastAPI backend. The backend retrieves relevant statute chunks from a pre-built FAISS index and uses an external LLM to generate structured answers — applicable law, CrPC procedure, rights, and next steps — with source citations.
 
-**No application database** is used in the MVP — each request is independent.
+**Citizen chat:** Multi-turn context via `conversation_id` + Supabase when configured; opening chat from home starts a **fresh thread** (past chats via sidebar). **Court Companion Pro** (lawyers) is planned separately — see [`docs/COURT_COMPANION_PRO.md`](COURT_COMPANION_PRO.md).
+
+**Planned:** See [`docs/PRODUCT_MODULES.md`](PRODUCT_MODULES.md) — Module 1 (smarter conversations) + Module 2 (admin dashboard & analytics).
 
 ---
 
@@ -72,10 +74,10 @@ flowchart TB
 
 | Responsibility | Details |
 |----------------|---------|
-| UI | Chat screen — input, message list, loading/error states |
-| Networking | `http` or `dio` → `POST /ask` |
-| Config | `API_BASE_URL` via `--dart-define` or env file |
-| Platform | Android APK (primary); web optional later |
+| UI | **Home** — Ask in chat · Ask by voice · Court Companion Pro (beta info). **Chat** — streaming messages, history sidebar, optional PDF/TXT attach. **Voice** — mic + TTS. **Pro** — product info screen (workspace not built yet) |
+| Networking | `http` → `POST /ask/stream`, conversations APIs, optional `/analyze-document` |
+| Config | `API_BASE_URL` via `--dart-define` or `api_config.dart` |
+| Platform | Android APK + Web (Chrome) |
 
 **Does not:** Run embeddings, hold API keys, or store user data.
 

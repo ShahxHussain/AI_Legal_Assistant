@@ -181,9 +181,9 @@ What are my rights after arrest?
 
 ---
 
-## Slide 10 — Optional DEMO 4: Document upload (~45 sec)
+## Slide 10 — Optional DEMO 4: Document attach in chat (~45 sec)
 
-**On screen:** Chat · attach small **TXT** or **PDF** (FIR draft, complaint sample)
+**On screen:** **Ask in chat** → attach small **TXT** or **PDF** (FIR draft, complaint sample) via clip button
 
 ### Demo D — Document + question
 
@@ -201,7 +201,7 @@ Summarize this document and what should I do next?
 
 ## Slide 11 — Impact & Roadmap (~1 min)
 
-**On screen:** Planned admin panel · thumbs up/down · 7-language voice · open source
+**On screen:** Admin panel · Court Companion Pro (beta) · thumbs up/down · 7-language voice · open source
 
 **Say:**
 

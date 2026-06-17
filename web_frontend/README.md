@@ -4,6 +4,13 @@ Marketing site for Court Companion (React + Vite + Tailwind + Framer Motion).
 
 Based on `Web_frontend.md` in the repo root.
 
+## Flutter app (citizen)
+
+- **Home:** Ask in chat · Ask by voice · Court Companion Pro (beta info)
+- Document analysis: optional attach inside chat — not a separate home entry
+
+**Court Companion Pro** (lawyers) — full design: [`docs/COURT_COMPANION_PRO.md`](../docs/COURT_COMPANION_PRO.md)
+
 ## Quick start
 
 ```bash
@@ -13,6 +20,20 @@ npm run dev
 ```
 
 Open http://localhost:5173
+
+## Admin dashboard (React)
+
+Organizer-only impact analytics — **not** in the Flutter app.
+
+| URL | Purpose |
+|-----|---------|
+| http://localhost:5173/admin | Login + KPIs, charts, recent feedback |
+
+1. Ensure backend is running with `ADMIN_API_KEY` and Supabase configured in `backend/.env`
+2. Open `/admin` and paste the same `ADMIN_API_KEY`
+3. Key is stored in `sessionStorage` for the browser tab only
+
+Optional: set `VITE_API_BASE_URL` in `web_frontend/.env` if the API is not on `http://127.0.0.1:8000`.
 
 ## Build for production
 
@@ -65,8 +86,8 @@ Edit `src/config/site.js` to update URLs.
 web_frontend/
 ├── public/
 ├── src/
-│   ├── components/   # Navbar, Hero, sections, Footer
-│   ├── utils/        # motion helpers
+│   ├── admin/        # /admin dashboard (login, KPIs, charts)
+│   ├── api/          # adminClient.js
 │   ├── App.jsx
 │   ├── main.jsx
 │   └── index.css     # color palette + global styles

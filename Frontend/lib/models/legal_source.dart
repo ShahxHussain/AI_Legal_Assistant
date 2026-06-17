@@ -57,4 +57,17 @@ class LegalSource {
     }
     return '[$n] ${document.split('.').first}';
   }
+
+  Map<String, dynamic> toJson() => {
+        'document': document,
+        'section': section,
+        'title': title,
+        'excerpt': excerpt,
+        'text': text,
+        'index': index,
+      };
+
+  factory LegalSource.fromStoredJson(Map<String, dynamic> json) {
+    return LegalSource.fromJson(json, index: json['index'] as int? ?? 0);
+  }
 }

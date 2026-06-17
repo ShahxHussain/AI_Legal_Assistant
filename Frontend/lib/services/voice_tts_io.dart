@@ -8,10 +8,14 @@ class PlatformTts {
   final Queue<String> _queue = Queue<String>();
   bool _ready = false;
   bool _processing = false;
+  String _language = 'en-US';
 
-  Future<bool> init() async {
+  String get language => _language;
+
+  Future<bool> init({String language = 'en-US'}) async {
     try {
-      await _tts.setLanguage('en-US');
+      _language = language;
+      await _tts.setLanguage(_language);
       await _tts.setSpeechRate(0.52);
       await _tts.setPitch(1.05);
       await _tts.awaitSpeakCompletion(true);
@@ -20,6 +24,57 @@ class PlatformTts {
     } catch (_) {
       return false;
     }
+  }
+
+  Future<bool> setLanguage(String language) async {
+    _language = language;
+    if (!_ready) return false;
+    try {
+      final result = await _tts.setLanguage(language);
+      if (result is int) return result == 1;
+      if (result is bool) return result;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> isLanguageAvailable(String language) async {
+    try {
+      final result = await _tts.isLanguageAvailable(language);
+      if (result is int) return result == 1;
+      if (result is bool) return result;
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> isLanguageInstalled(String language) async {
+    try {
+      final result = await _tts.isLanguageInstalled(language);
+      if (result is int) return result == 1;
+      if (result is bool) return result;
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// True when a TTS engine reports an Urdu voice (installed or bundled).
+  Future<bool> hasUrduVoice() async {
+    if (!_ready) return false;
+    try {
+      if (await isLanguageInstalled('ur-PK')) return true;
+      final voices = await _tts.getVoices;
+      if (voices is! List) return false;
+      for (final raw in voices) {
+        if (raw is! Map) continue;
+        final locale = (raw['locale'] ?? raw['name'] ?? '').toString().toLowerCase();
+        if (locale.startsWith('ur')) return true;
+      }
+    } catch (_) {}
+    return false;
   }
 
   void enqueue(String text) {

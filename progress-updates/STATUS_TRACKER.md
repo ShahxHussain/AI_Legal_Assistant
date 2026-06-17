@@ -14,8 +14,9 @@ Update this file **after every working step** (along with `CHANGE_LOG.md` and `D
 | 6 | RAG Pipeline & LLM Integration | DONE | 2026-06-10 | 2026-06-12 | 2026-06-10 | Together.ai + production prompt v2; language detection. |
 | 7 | Core Legal Q&A API | DONE | 2026-06-10 | 2026-06-12 | 2026-06-10 | `POST /ask` tested locally with sources. |
 | 8 | Backend Deployment (Render) | NOT_STARTED | - | 2026-06-12 | - | Deploy stateless FastAPI + FAISS; public HTTPS URL for Flutter APK. |
-| 9 | Flutter App Shell & Chat UI | DONE | 2026-06-10 | 2026-06-13 | 2026-06-10 | `Frontend/` — chat UI, API service, sources, APK-ready config. |
-| 10 | Testing & Quality Assurance | NOT_STARTED | - | 2026-06-13 | - | Smoke tests for `/health`, `/ask`, and APK → API flow. |
+| 9 | Flutter App Shell & Chat UI | DONE | 2026-06-10 | 2026-06-13 | 2026-06-17 | Home: Ask in chat · voice · Pro (beta). Chat sidebar, Pro info screen. |
+| 9b | Court Companion Pro (planning + app info) | IN_PROGRESS | 2026-06-17 | - | - | `docs/COURT_COMPANION_PRO.md`, `ProScreen`, home card. Workspace not built. |
+| 10 | Module 1 — Chat history (partial) | IN_PROGRESS | 2026-06-16 | - | - | Supabase conversations, sidebar, session follow-up; fresh chat from home. |
 | 11 | Hackathon Submission Packaging | NOT_STARTED | - | 2026-06-13 | - | Devpost submission, demo script, screenshots, repo links. |
 
 ## Architecture decisions (MVP)
@@ -23,7 +24,7 @@ Update this file **after every working step** (along with `CHANGE_LOG.md` and `D
 | Decision | Choice | Rationale |
 |---|---|---|
 | Vector store | **FAISS** (not ChromaDB) | ~983 section chunks; lightest deploy; file-based index |
-| App database | **None** | Stateless API; no user/chat storage needed |
+| App database | **Supabase** (optional) | Conversations/messages for multi-turn context; Pro schema planned separately |
 | LLM | **Together.ai** — `meta-llama/Meta-Llama-3-8B-Instruct-Lite` | `TOGETHER_API_KEY` in server env |
 | Hosting | **Render** (or similar free tier) | Public URL required for Flutter APK |
 | Client | **Flutter APK** (`Frontend/`) | Calls deployed backend over HTTPS |
@@ -36,5 +37,6 @@ Update this file **after every working step** (along with `CHANGE_LOG.md` and `D
 | Voice Support (STT / TTS) | ON_HOLD | Post-MVP accessibility feature |
 | Legal Resource Center | ON_HOLD | Downloadable templates — post-MVP |
 | Lawyer Recommendation | ON_HOLD | Category-based matching — post-MVP |
-| Chat History | ON_HOLD | Requires auth + database |
-| Feedback System | ON_HOLD | Ratings and reports — post-MVP |
+| Chat History | IN_PROGRESS | Sidebar + Supabase; agentic clarifying → Pro module |
+| Court Companion Pro | IN_PROGRESS | Planning doc + Flutter info screen; workspace not built |
+| Feedback System | DONE | 👍/👎 in chat; admin KPIs |

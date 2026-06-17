@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../services/voice_locales.dart';
 import '../theme/app_theme.dart';
 import 'language_picker.dart';
 
-/// Voice mode: English only today; other languages show Coming Soon.
-const kVoiceDefaultLanguage = 'english';
-
-const kVoiceEnabledLanguages = <String>{'english'};
+export '../services/voice_locales.dart'
+    show kVoiceDefaultLanguage, kVoiceEnabledLanguages;
 
 class VoiceLanguagePicker extends StatelessWidget {
   const VoiceLanguagePicker({
     super.key,
     required this.value,
     required this.onChanged,
+    this.compact = false,
   });
 
   final String value;
   final ValueChanged<String> onChanged;
+  final bool compact;
 
   void _onSelect(BuildContext context, String code) {
     if (!kVoiceEnabledLanguages.contains(code)) {
@@ -44,8 +45,8 @@ class VoiceLanguagePicker extends StatelessWidget {
         ),
         content: Text(
           'Voice assistant in $label is coming soon.\n\n'
-          'For now, please use English voice or switch to Chat for '
-          'text answers in all languages.',
+          'English and Urdu voice are available now. For other languages, '
+          'use Chat for text answers.',
           style: GoogleFonts.inter(height: 1.5, fontSize: 14),
         ),
         actions: [
@@ -67,7 +68,8 @@ class VoiceLanguagePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = languageLabel(value);
-    final isEnglish = kVoiceEnabledLanguages.contains(value);
+    final short = languageShortLabel(value);
+    final voiceEnabled = kVoiceEnabledLanguages.contains(value);
 
     return PopupMenuButton<String>(
       tooltip: 'Voice language',
@@ -110,12 +112,15 @@ class VoiceLanguagePicker extends StatelessWidget {
         );
       }).toList(),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 8 : 12,
+          vertical: compact ? 6 : 7,
+        ),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isEnglish
+            color: voiceEnabled
                 ? AppColors.border
                 : AppColors.secondary.withValues(alpha: 0.35),
           ),
@@ -124,21 +129,36 @@ class VoiceLanguagePicker extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              isEnglish ? Icons.mic_rounded : Icons.mic_off_rounded,
+              voiceEnabled ? Icons.mic_rounded : Icons.mic_off_rounded,
               size: 15,
               color: AppColors.secondary,
             ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textDark,
+            if (!compact) ...[
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
               ),
+            ] else ...[
+              const SizedBox(width: 4),
+              Text(
+                short,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ],
+            Icon(
+              Icons.expand_more_rounded,
+              size: compact ? 14 : 16,
+              color: AppColors.muted,
             ),
-            const Icon(Icons.expand_more_rounded,
-                size: 16, color: AppColors.muted),
           ],
         ),
       ),

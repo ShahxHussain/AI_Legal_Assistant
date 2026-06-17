@@ -4,11 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../config/api_config.dart';
 import '../models/chat_message.dart';
+import '../models/conversation_summary.dart';
 import '../services/api_service.dart';
 import '../services/assistant_stream.dart';
+import '../services/chat_session_store.dart';
+import '../services/device_identity.dart';
 import '../theme/app_theme.dart';
 import '../widgets/api_status_badge.dart';
 import '../widgets/chat_bubble.dart';
+import '../widgets/chat_history_sidebar.dart';
 import '../widgets/language_picker.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -22,13 +26,23 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _api = ApiService();
+  final _session = ChatSessionStore();
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   final _messages = <ChatMessage>[];
+  final _conversations = <ConversationSummary>[];
+
   bool _isSending = false;
+  bool _loadingHistory = true;
+  bool _loadingConversations = false;
+  bool _sidebarOpen = true;
+  bool _sidebarInitialized = false;
   bool? _apiHealthy;
   PlatformFile? _attachedFile;
   String _language = kDefaultLanguage;
+  String? _deviceId;
+  String? _conversationId;
 
   static const _suggestions = [
     ('What is an FIR?', Icons.description_outlined),
@@ -37,11 +51,229 @@ class _ChatScreenState extends State<ChatScreen> {
     ('What is Section 302 PPC?', Icons.gavel_outlined),
   ];
 
+  static const _sidebarBreakpoint = 900.0;
+
   @override
   void initState() {
     super.initState();
     _language = widget.initialLanguage;
     _checkApiHealth();
+    _loadSession();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_sidebarInitialized) {
+      _sidebarOpen = MediaQuery.sizeOf(context).width >= _sidebarBreakpoint;
+      _sidebarInitialized = true;
+    }
+  }
+
+  bool get _isWide => MediaQuery.sizeOf(context).width >= _sidebarBreakpoint;
+
+  Future<void> _loadSession() async {
+    _deviceId = await DeviceIdentity.ensureDeviceId();
+    // Opening chat from home always starts fresh; use sidebar for past chats.
+    await _session.clearAll();
+    if (mounted) {
+      setState(() {
+        _messages.clear();
+        _conversationId = null;
+        _loadingHistory = false;
+      });
+    }
+
+    try {
+      await _loadConversationList();
+    } catch (_) {
+      // Sidebar may be empty offline.
+    }
+  }
+
+  Future<void> _loadConversationList() async {
+    if (_deviceId == null) return;
+    setState(() => _loadingConversations = true);
+    try {
+      final list = await _api.listConversations(_deviceId!);
+      final titles = await _session.loadTitles();
+      if (!mounted) return;
+      setState(() {
+        _conversations
+          ..clear()
+          ..addAll([
+            for (final row in list)
+              ConversationSummary.fromApi(
+                row,
+                titleOverride: titles[row['id'] as String],
+                isActive: row['id'] == _conversationId,
+              ),
+          ]);
+        _loadingConversations = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingConversations = false);
+    }
+  }
+
+  Future<void> _syncFromServer(String conversationId) async {
+    if (_deviceId == null) return;
+    final data = await _api.getConversation(
+      conversationId: conversationId,
+      deviceId: _deviceId!,
+    );
+    final rows = data['messages'] as List<dynamic>? ?? [];
+    final loaded = [
+      for (final row in rows)
+        ChatMessage.fromJson(row as Map<String, dynamic>),
+    ];
+    if (!mounted || loaded.isEmpty) return;
+    setState(() {
+      _messages
+        ..clear()
+        ..addAll(loaded);
+      _conversationId = conversationId;
+    });
+    await _persistLocal();
+    await _ensureConversationTitle();
+    _scrollToBottom();
+  }
+
+  Future<void> _submitFeedback(ChatMessage message, String rating) async {
+    if (_deviceId == null || !message.canReceiveFeedback) return;
+    if (message.feedbackRating == rating) return;
+
+    try {
+      await _api.submitFeedback(
+        messageId: message.id,
+        deviceId: _deviceId!,
+        rating: rating,
+        conversationId: _conversationId,
+        language: _language,
+      );
+      if (!mounted) return;
+      setState(() {
+        final idx = _messages.indexWhere((m) => m.id == message.id);
+        if (idx != -1) {
+          _messages[idx] = _messages[idx].copyWith(feedbackRating: rating);
+        }
+      });
+      await _persistLocal();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not save feedback. Try again when online.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _persistLocal() async {
+    await _session.saveMessages(_messages);
+    await _session.setConversationId(_conversationId);
+    if (_conversationId != null) {
+      await _session.saveMessagesFor(_conversationId!, _messages);
+    }
+  }
+
+  Future<void> _ensureConversationTitle() async {
+    if (_conversationId == null) return;
+    final titles = await _session.loadTitles();
+    if (titles.containsKey(_conversationId)) return;
+    ChatMessage? firstUser;
+    for (final message in _messages) {
+      if (message.role == MessageRole.user && message.text.trim().isNotEmpty) {
+        firstUser = message;
+        break;
+      }
+    }
+    if (firstUser == null) return;
+    await _session.setTitle(_conversationId!, firstUser.text);
+    await _loadConversationList();
+  }
+
+  Future<void> _openConversation(String id) async {
+    if (_isSending || id == _conversationId) {
+      _closeSidebarOverlay();
+      return;
+    }
+
+    if (_conversationId != null && _messages.isNotEmpty) {
+      await _session.saveMessagesFor(_conversationId!, _messages);
+    }
+
+    setState(() {
+      _loadingHistory = true;
+      _conversationId = id;
+      _messages.clear();
+    });
+
+    final local = await _session.loadMessagesFor(id);
+    if (mounted) {
+      setState(() {
+        _messages.addAll(local);
+        _loadingHistory = false;
+      });
+      if (_messages.isNotEmpty) _scrollToBottom();
+    }
+
+    await _session.setConversationId(id);
+    try {
+      await _syncFromServer(id);
+    } catch (_) {}
+    await _loadConversationList();
+    _closeSidebarOverlay();
+  }
+
+  Future<void> _startNewChat() async {
+    if (_isSending) return;
+
+    if (_conversationId != null && _messages.isNotEmpty) {
+      await _session.saveMessagesFor(_conversationId!, _messages);
+    }
+
+    setState(() {
+      _messages.clear();
+      _conversationId = null;
+    });
+    await _session.clearAll();
+    await _loadConversationList();
+    _closeSidebarOverlay();
+  }
+
+  Future<void> _deleteConversationById(String id) async {
+    if (_deviceId == null) return;
+    try {
+      await _api.deleteConversation(
+        conversationId: id,
+        deviceId: _deviceId!,
+      );
+    } catch (_) {}
+
+    if (_conversationId == id) {
+      setState(() {
+        _messages.clear();
+        _conversationId = null;
+      });
+      await _session.clearAll();
+    }
+    await _loadConversationList();
+  }
+
+  void _toggleSidebar() {
+    if (_isWide) {
+      setState(() => _sidebarOpen = !_sidebarOpen);
+      return;
+    }
+    _scaffoldKey.currentState?.openDrawer();
+  }
+
+  void _closeSidebarOverlay() {
+    if (_isWide) return;
+    if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+      Navigator.of(context).pop();
+    }
   }
 
   Future<void> _checkApiHealth() async {
@@ -118,7 +350,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       if (file != null) {
-        // Document analysis stays non-streaming
         final response = await _api.analyzeDocument(
           bytes: file.bytes!,
           filename: file.name,
@@ -141,8 +372,10 @@ class _ChatScreenState extends State<ChatScreen> {
           _isSending = false;
           _apiHealthy = true;
         });
+        await _persistLocal();
+        await _ensureConversationTitle();
       } else {
-        await _streamAnswer(text, loadingId, answerId);
+        await _streamAnswer(text, loadingId, answerId, userId);
       }
     } on ApiException catch (e) {
       _replaceLoadingWithError(loadingId, answerId, e.message);
@@ -163,11 +396,18 @@ class _ChatScreenState extends State<ChatScreen> {
     String text,
     String loadingId,
     String answerId,
+    String userId,
   ) async {
     final result = await streamAssistantAnswer(
       _api,
       question: text,
       language: _language,
+      deviceId: _deviceId,
+      conversationId: _conversationId,
+      onConversationId: (id) {
+        if (id == null || !mounted) return;
+        setState(() => _conversationId = id);
+      },
       onPartial: (partial) {
         if (!mounted) return;
         setState(() {
@@ -188,21 +428,33 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (!mounted) return;
     setState(() {
+      if (result.userMessageId != null) {
+        final uIdx = _messages.indexWhere((m) => m.id == userId);
+        if (uIdx != -1) {
+          _messages[uIdx] = _messages[uIdx].copyWith(id: result.userMessageId!);
+        }
+      }
       final idx = _messages.indexWhere(
         (m) => m.id == loadingId || m.id == answerId,
       );
       if (idx != -1) {
         _messages[idx] = ChatMessage(
-          id: answerId,
+          id: result.assistantMessageId ?? answerId,
           role: MessageRole.assistant,
           text: result.answer,
           sources: List.from(result.sources),
           disclaimer: result.disclaimer,
         );
       }
+      _conversationId = result.conversationId ?? _conversationId;
       _isSending = false;
       _apiHealthy = true;
     });
+    await _persistLocal();
+    if (_conversationId != null) {
+      await _session.setTitle(_conversationId!, text);
+    }
+    await _loadConversationList();
   }
 
   void _replaceLoadingWithError(
@@ -241,8 +493,36 @@ class _ChatScreenState extends State<ChatScreen> {
   bool get _canSend =>
       !_isSending && (_controller.text.trim().isNotEmpty || _attachedFile != null);
 
+  String get _activeTitle => 'Court Companion';
+
+  Widget _buildSidebar({bool compact = false}) {
+    return ChatHistorySidebar(
+      compact: compact,
+      conversations: _conversations,
+      loading: _loadingConversations,
+      onNewChat: _startNewChat,
+      onSelect: _openConversation,
+      onDelete: _deleteConversationById,
+      onClose: () {
+        if (_isWide) {
+          setState(() => _sidebarOpen = false);
+        } else {
+          Navigator.of(context).pop();
+        }
+      },
+    );
+  }
+
+  Future<void> _flushActiveSession() async {
+    if (_conversationId != null && _messages.isNotEmpty) {
+      await _session.saveMessagesFor(_conversationId!, _messages);
+    }
+    await _session.clearAll();
+  }
+
   @override
   void dispose() {
+    _flushActiveSession();
     _api.dispose();
     _controller.dispose();
     _scrollController.dispose();
@@ -251,104 +531,115 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final showInlineSidebar = _isWide && _sidebarOpen;
+
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          if (_apiHealthy == false) _buildOfflineBanner(),
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return ChatBubble(
-                  key: ValueKey(message.id),
-                  message: message,
-                );
-              },
+      drawer: _isWide
+          ? null
+          : Drawer(
+              width: 280,
+              backgroundColor: AppColors.surface,
+              child: SafeArea(child: _buildSidebar()),
             ),
-          ),
-          if (_messages.isEmpty) _buildSuggestions(),
-          _buildInputBar(),
+      body: Row(
+        children: [
+          if (showInlineSidebar) _buildSidebar(),
+          Expanded(child: _buildMainPane()),
         ],
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: AppColors.surface,
-      surfaceTintColor: Colors.transparent,
-      leading: IconButton(
-        onPressed: () => Navigator.pop(context),
-        icon: const Icon(Icons.arrow_back_rounded),
-        style: IconButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          foregroundColor: AppColors.textDark,
+  Widget _buildMainPane() {
+    return Column(
+      children: [
+        _buildTopBar(),
+        if (_apiHealthy == false) _buildOfflineBanner(),
+        Expanded(
+          child: _loadingHistory
+              ? const Center(child: CircularProgressIndicator())
+              : ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  itemCount: _messages.length,
+                  itemBuilder: (context, index) {
+                    final message = _messages[index];
+                    return ChatBubble(
+                      key: ValueKey(message.id),
+                      message: message,
+                      onFeedback: message.canReceiveFeedback
+                          ? (rating) => _submitFeedback(message, rating)
+                          : null,
+                    );
+                  },
+                ),
         ),
+        if (_messages.isEmpty) _buildSuggestions(),
+        _buildInputBar(),
+      ],
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
-      title: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: AppColors.secondary,
-              borderRadius: BorderRadius.circular(11),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          children: [
+            IconButton(
+              tooltip: _sidebarOpen ? 'Hide chat history' : 'Show chat history',
+              onPressed: _toggleSidebar,
+              icon: Icon(
+                _sidebarOpen && _isWide
+                    ? Icons.view_sidebar_outlined
+                    : Icons.menu_rounded,
+              ),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                foregroundColor: AppColors.textDark,
+              ),
             ),
-            child: const Icon(Icons.balance_rounded, color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Court Companion',
+            IconButton(
+              tooltip: 'Back to home',
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back_rounded),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                foregroundColor: AppColors.textDark,
+              ),
+            ),
+            Expanded(
+              child: Text(
+                _activeTitle,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
                 style: GoogleFonts.plusJakartaSans(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
                   color: AppColors.textDark,
                 ),
               ),
-              Text(
-                'AI Legal Assistant',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: AppColors.muted,
-                  fontWeight: FontWeight.w500,
-                ),
+            ),
+            LanguagePicker(
+              compact: true,
+              value: _language,
+              onChanged: (value) => setState(() => _language = value),
+            ),
+            Tooltip(
+              message: ApiConfig.baseUrl,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8, left: 4),
+                child: ApiStatusBadge(healthy: _apiHealthy),
               ),
-            ],
-          ),
-        ],
-      ),
-      actions: [
-        _buildLanguageSelector(),
-        Tooltip(
-          message: ApiConfig.baseUrl,
-          child: Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: ApiStatusBadge(healthy: _apiHealthy),
-          ),
-        ),
-      ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: AppColors.border),
-      ),
-    );
-  }
-
-  Widget _buildLanguageSelector() {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Center(
-        child: LanguagePicker(
-          value: _language,
-          onChanged: (value) => setState(() => _language = value),
+            ),
+          ],
         ),
       ),
     );
@@ -365,7 +656,7 @@ class _ChatScreenState extends State<ChatScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Backend offline — start the API server to get answers',
+                'Backend offline — could not reach ${ApiConfig.baseUrl}',
                 style: GoogleFonts.inter(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w500,
@@ -616,7 +907,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 borderRadius: BorderRadius.circular(12),
                 child: const Padding(
                   padding: EdgeInsets.all(4),
-                  child: Icon(Icons.close_rounded, size: 16, color: AppColors.muted),
+                  child:
+                      Icon(Icons.close_rounded, size: 16, color: AppColors.muted),
                 ),
               ),
             ],

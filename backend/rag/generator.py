@@ -123,6 +123,15 @@ class Generator:
             if text:
                 yield text
 
+    def _inject_history(
+        self, messages: list[dict], history: list[dict[str, str]]
+    ) -> list[dict]:
+        if not history:
+            return messages
+        system = messages[0]
+        tail = messages[1:]
+        return [system, *history, *tail]
+
     def _rag_messages(
         self,
         question: str,
@@ -130,6 +139,7 @@ class Generator:
         language: str | None = None,
         *,
         voice_mode: bool = False,
+        history: list[dict[str, str]] | None = None,
     ) -> list[dict]:
         context = build_context(chunks)
         lang = detect_response_language(question, override=language)
@@ -154,10 +164,13 @@ class Generator:
             )
         )
 
-        return [
-            {"role": "system", "content": system_content},
-            {"role": "user", "content": user_message},
-        ]
+        return self._inject_history(
+            [
+                {"role": "system", "content": system_content},
+                {"role": "user", "content": user_message},
+            ],
+            history or [],
+        )
 
     def generate(
         self,
@@ -166,9 +179,12 @@ class Generator:
         language: str | None = None,
         *,
         voice_mode: bool = False,
+        history: list[dict[str, str]] | None = None,
     ) -> str:
         return self._chat(
-            self._rag_messages(question, chunks, language, voice_mode=voice_mode),
+            self._rag_messages(
+                question, chunks, language, voice_mode=voice_mode, history=history
+            ),
             max_tokens=settings.llm_max_tokens,
         )
 
@@ -179,10 +195,13 @@ class Generator:
         language: str | None = None,
         *,
         voice_mode: bool = False,
+        history: list[dict[str, str]] | None = None,
     ):
         """Yield raw answer deltas; caller sanitizes the joined result."""
         yield from self._chat_stream(
-            self._rag_messages(question, chunks, language, voice_mode=voice_mode),
+            self._rag_messages(
+                question, chunks, language, voice_mode=voice_mode, history=history
+            ),
             max_tokens=settings.llm_max_tokens,
         )
 
@@ -192,6 +211,7 @@ class Generator:
         language: str | None = None,
         *,
         voice_mode: bool = False,
+        history: list[dict[str, str]] | None = None,
     ) -> list[dict]:
         lang = detect_response_language(question, override=language)
         lang_rule = language_system_rule(lang)
@@ -205,10 +225,13 @@ class Generator:
             system_content += VOICE_REPLY_APPEND
         user_message = f"{question.strip()}\n\n{language_instruction(lang)}"
 
-        return [
-            {"role": "system", "content": system_content},
-            {"role": "user", "content": user_message},
-        ]
+        return self._inject_history(
+            [
+                {"role": "system", "content": system_content},
+                {"role": "user", "content": user_message},
+            ],
+            history or [],
+        )
 
     def generate_conversational(
         self,
@@ -216,10 +239,13 @@ class Generator:
         language: str | None = None,
         *,
         voice_mode: bool = False,
+        history: list[dict[str, str]] | None = None,
     ) -> str:
         """Reply to greetings / meta questions without RAG context or sources."""
         return self._chat(
-            self._conversational_messages(question, language, voice_mode=voice_mode),
+            self._conversational_messages(
+                question, language, voice_mode=voice_mode, history=history
+            ),
             max_tokens=settings.llm_conversational_max_tokens,
         )
 
@@ -229,9 +255,12 @@ class Generator:
         language: str | None = None,
         *,
         voice_mode: bool = False,
+        history: list[dict[str, str]] | None = None,
     ):
         yield from self._chat_stream(
-            self._conversational_messages(question, language, voice_mode=voice_mode),
+            self._conversational_messages(
+                question, language, voice_mode=voice_mode, history=history
+            ),
             max_tokens=settings.llm_conversational_max_tokens,
         )
 

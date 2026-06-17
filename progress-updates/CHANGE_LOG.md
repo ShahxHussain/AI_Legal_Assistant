@@ -14,6 +14,12 @@ Track meaningful implementation changes in chronological order.
 
 ---
 
+- `[2026-06-17] [Step 9b] Home screen + Court Companion Pro docs`
+  - What changed: Home reordered to **Ask in chat** → **Ask by voice** → **Court Companion Pro** (beta). Removed **Analyze a document** home card (attach remains in chat). Added `docs/COURT_COMPANION_PRO.md`, `ProScreen`, widget test update. Synced README, ARCHITECTURE, PRD, PRODUCT_MODULES, SUBMISSION_SCREENING, Devpost, PITCH_DECK, Frontend README, STATUS_TRACKER.
+  - Why changed: Separate citizen free tier from professional Pro product; document analysis is secondary to chat/voice entry points.
+  - Impact: Docs and app UI aligned; Pro planning doc is source of truth for lawyer workspace + agentic follow-ups.
+  - Related test(s): `Frontend/test/widget_test.dart`
+
 - `[2026-06-11] [Step 6] Gemma 4 model switch + multilingual RAG fixes + clean UI remake`
   - What changed: **Model:** `google/gemma-4-31B-it` (reasoning disabled via `reasoning_effort=none` for latency; budgets 3200/700; softer penalties 1.05/0.1; client timeout 90s + 2 retries). **RAG:** non-English queries now translated to English (8B Lite) before retrieval; multi-doc direct section hits (PPC + CrPC together); "150,000" no longer parsed as section 150; Urdu-script legal keywords in intent detection; TOP_K=8. **Output guard:** recognizes Urdu full stop "۔", preserves markdown line breaks. **UI:** clean light remake (Urdu Nastaliq greeting on Home, soft mint cards, no navy fills), language chips + response-language picker on Home (carries into chat), attach button redesigned inside unified input pill.
   - Why changed: Urdu-script questions retrieved nothing (English-only embeddings) → "not enough info" replies; Gemma reasoning made replies slow/empty at old token budgets; user requested screenshot-matched clean UI.

@@ -1,6 +1,18 @@
 # Court Companion — Frontend
 
-Flutter mobile app for **Court Companion | AI Legal Bilingual Assistant**.
+Flutter app for **Court Companion | AI Legal Multilingual Assistant**.
+
+## Home screen
+
+Three entry points (in order):
+
+| Option | Screen | Description |
+|--------|--------|-------------|
+| **Ask in chat** | `ChatScreen` | Text Q&A, streaming, chat history sidebar, optional PDF/TXT attach |
+| **Ask by voice** | `VoiceScreen` | Mic input + spoken answers (English voice today) |
+| **Court Companion Pro** | `ProScreen` | Beta product info for lawyers — full workspace coming later ([`../docs/COURT_COMPANION_PRO.md`](../docs/COURT_COMPANION_PRO.md)) |
+
+> **Note:** Document analysis is **not** a separate home button. Users can attach PDF/TXT inside chat via the clip icon, or call `POST /analyze-document` on the API directly.
 
 ## Prerequisites
 
@@ -46,6 +58,22 @@ flutter run --dart-define=API_BASE_URL=http://192.168.1.XXX:8000
 flutter run --dart-define=API_BASE_URL=https://your-app.onrender.com
 ```
 
+## Build Flutter Web (production)
+
+```powershell
+flutter build web --release
+```
+
+Release builds use the Render API automatically. No APK download needed for users — share a web link instead.
+
+### Deploy from GitHub → Vercel
+
+1. Create a **second** Vercel project (landing uses `web_frontend`).
+2. Set **Root Directory** to `Frontend`.
+3. Push to GitHub — Vercel runs `scripts/vercel-build.sh` via `vercel.json`.
+
+Full steps: [`../docs/FLUTTER_WEB_DEPLOY.md`](../docs/FLUTTER_WEB_DEPLOY.md)
+
 ## Build APK
 
 ```powershell
@@ -62,16 +90,34 @@ Frontend/
 │   ├── main.dart
 │   ├── config/api_config.dart
 │   ├── models/
-│   ├── services/api_service.dart
-│   ├── screens/chat_screen.dart
+│   ├── services/
+│   │   ├── api_service.dart
+│   │   ├── assistant_stream.dart
+│   │   ├── chat_session_store.dart
+│   │   └── device_identity.dart
+│   ├── screens/
+│   │   ├── home_screen.dart
+│   │   ├── chat_screen.dart
+│   │   ├── voice_screen.dart
+│   │   ├── pro_screen.dart
+│   │   └── info_screen.dart
 │   └── widgets/
 └── android/
 ```
 
-## Features (MVP)
+## Features
 
-- Chat UI for legal questions
-- Calls `POST /ask` on backend
-- Shows answer + source citations + disclaimer
-- API health indicator in app bar
-- English and Roman Urdu questions supported (backend handles language)
+### Citizen (free)
+
+- Home: Ask in chat · Ask by voice · Court Companion Pro (beta info)
+- Streaming legal Q&A with source citations (`POST /ask/stream`)
+- 7 reply languages (picker on home + chat)
+- Chat history sidebar; **new empty chat** each time you open from home; past threads via sidebar
+- Optional document attach in chat → `/analyze-document`
+- API health badge
+
+### Court Companion Pro (beta — info only)
+
+- `ProScreen` explains the planned professional case workspace
+- Case upload, agentic follow-ups, case-law RAG — see [`docs/COURT_COMPANION_PRO.md`](../docs/COURT_COMPANION_PRO.md)
+- **Start a Pro case** button disabled until workspace ships

@@ -6,6 +6,7 @@ import '../widgets/court_companion_info_card.dart';
 import '../widgets/language_picker.dart';
 import 'chat_screen.dart';
 import 'info_screen.dart';
+import 'pro_screen.dart';
 import 'voice_screen.dart';
 import '../widgets/voice_language_picker.dart';
 
@@ -29,10 +30,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openVoice(BuildContext context) {
+    final initial = kVoiceEnabledLanguages.contains(_language)
+        ? _language
+        : kVoiceDefaultLanguage;
     Navigator.push(
       context,
       MaterialPageRoute<void>(
-        builder: (_) => const VoiceScreen(initialLanguage: kVoiceDefaultLanguage),
+        builder: (_) => VoiceScreen(initialLanguage: initial),
       ),
     );
   }
@@ -41,6 +45,13 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute<void>(builder: (_) => const InfoScreen()),
+    );
+  }
+
+  void _openPro(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(builder: (_) => const ProScreen()),
     );
   }
 
@@ -53,58 +64,60 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _buildTopBar(context),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 44),
+                    const SizedBox(height: 20),
                     Text(
                       'السلام علیکم!',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.notoNastaliqUrdu(
-                        fontSize: 30,
+                        fontSize: 29,
                         fontWeight: FontWeight.w700,
                         color: AppColors.secondary,
-                        height: 1.7,
+                        height: 1.5,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Text(
                       'میں آپ کی قانونی رہنمائی کیسے کر سکتا ہوں؟',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.notoNastaliqUrdu(
                         fontSize: 15,
-                        color: AppColors.textDark,
-                        height: 2,
+                        color: AppColors.textDark.withValues(alpha: 0.85),
+                        height: 1.6,
                       ),
                     ),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 10),
                     Text(
-                      'Ask your legal question in\nyour own words.',
+                      'Describe your situation or ask a legal question.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textDark.withValues(alpha: 0.8),
-                        height: 1.45,
+                        color: AppColors.muted,
+                        height: 1.35,
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 10),
                     const LanguageChips(centered: true),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    const SizedBox(height: 10),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
                         Text(
-                          'Response language:',
+                          'Select response language:',
                           style: GoogleFonts.inter(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.muted,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textDark.withValues(alpha: 0.85),
                           ),
                         ),
-                        const SizedBox(width: 8),
                         LanguagePicker(
                           value: _language,
                           onChanged: (value) =>
@@ -112,36 +125,39 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 26),
-                    _OptionCard(
-                      icon: Icons.chat_bubble_rounded,
-                      title: 'Type your question',
-                      subtitle: 'Ask in text',
-                      onTap: () => _openChat(context),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          const Spacer(flex: 2),
+                          _OptionCard(
+                            icon: Icons.chat_bubble_rounded,
+                            title: 'Ask in chat',
+                            subtitle: 'Type your question',
+                            onTap: () => _openChat(context),
+                          ),
+                          const SizedBox(height: 6),
+                          _OptionCard(
+                            icon: Icons.mic_rounded,
+                            title: 'Ask by voice',
+                            subtitle: 'Speak · English & Urdu',
+                            onTap: () => _openVoice(context),
+                          ),
+                          const SizedBox(height: 6),
+                          _ProOptionCard(
+                            onTap: () => _openPro(context),
+                          ),
+                          const Spacer(flex: 1),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 14),
-                    _OptionCard(
-                      icon: Icons.mic_rounded,
-                      title: 'Ask by voice',
-                      subtitle: 'Speak your question · English',
-                      onTap: () => _openVoice(context),
-                    ),
-                    const SizedBox(height: 14),
-                    _OptionCard(
-                      icon: Icons.upload_file_rounded,
-                      title: 'Analyze a document',
-                      subtitle: 'Upload a PDF or TXT file',
-                      onTap: () => _openChat(context),
-                    ),
-                    const SizedBox(height: 26),
                     const _TrustNote(),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 8),
                     Text(
                       'AI for Civic Innovation 2026 · Pakistan',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: AppColors.muted.withValues(alpha: 0.7),
+                        fontSize: 10,
+                        color: AppColors.muted.withValues(alpha: 0.65),
                       ),
                     ),
                   ],
@@ -156,39 +172,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTopBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 12, 0),
+      padding: const EdgeInsets.fromLTRB(16, 10, 8, 0),
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: AppColors.secondary,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(11),
             ),
             child: const Icon(
               Icons.balance_rounded,
               color: Colors.white,
-              size: 22,
+              size: 20,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Court Companion',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 17,
+                  fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textDark,
                   letterSpacing: -0.2,
                 ),
               ),
               Text(
-                'AI Legal Assistant',
+                'AI Legal Multilingual Assistant',
                 style: GoogleFonts.inter(
-                  fontSize: 11.5,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500,
                   color: AppColors.muted,
                 ),
@@ -199,13 +215,133 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             onPressed: () => _openInfo(context),
             tooltip: 'About Court Companion',
-            icon: const Icon(Icons.menu_rounded),
+            icon: const Icon(
+              Icons.info_outline_rounded,
+              size: 20,
+              color: AppColors.secondary,
+            ),
             style: IconButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              foregroundColor: AppColors.textDark,
+              backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
+              foregroundColor: AppColors.secondary,
+              minimumSize: const Size(40, 40),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProOptionCard extends StatelessWidget {
+  const _ProOptionCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                AppColors.primary.withValues(alpha: 0.06),
+                AppColors.secondary.withValues(alpha: 0.08),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.22)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.workspace_premium_rounded,
+                    color: AppColors.primary,
+                    size: 21,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Court Companion Pro',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.secondary,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'BETA',
+                              style: GoogleFonts.inter(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'For lawyers · case upload · follow-up Q&A',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: AppColors.muted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: AppColors.primary.withValues(alpha: 0.6),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -230,46 +366,52 @@ class _OptionCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         child: Ink(
           decoration: BoxDecoration(
-            color: AppColors.accentSoft.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: AppColors.secondary.withValues(alpha: 0.10),
-            ),
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
                 Container(
-                  width: 46,
-                  height: 46,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(13),
+                    color: AppColors.secondary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: AppColors.secondary, size: 22),
+                  child: Icon(icon, color: AppColors.secondary, size: 21),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         title,
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textDark,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2),
                       Text(
                         subtitle,
                         style: GoogleFonts.inter(
-                          fontSize: 13,
+                          fontSize: 12,
                           color: AppColors.muted,
                         ),
                       ),
@@ -277,8 +419,9 @@ class _OptionCard extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.muted.withValues(alpha: 0.8),
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: AppColors.muted.withValues(alpha: 0.7),
                 ),
               ],
             ),
@@ -295,27 +438,27 @@ class _TrustNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.verified_user_rounded,
-            size: 20,
-            color: AppColors.secondary,
+            size: 18,
+            color: AppColors.secondary.withValues(alpha: 0.9),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
-              "Answers are based on Pakistan's legal framework and verified legal sources.",
+              'Grounded in PPC, CrPC & ATA — informational only, not legal advice.',
               style: GoogleFonts.inter(
-                fontSize: 12.5,
+                fontSize: 11,
                 color: AppColors.muted,
-                height: 1.45,
+                height: 1.35,
               ),
             ),
           ),
