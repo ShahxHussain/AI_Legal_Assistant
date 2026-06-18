@@ -146,6 +146,31 @@ body {
   @apply inline-flex items-center justify-center gap-2 rounded-lg border border-amber-400/40 bg-amber-50 px-5 py-2.5 text-sm font-medium text-amber-900 transition-all duration-200 hover:border-amber-500/60 hover:bg-amber-100;
 }
 
+.admin-card {
+  @apply rounded-2xl border border-neutral-200/90 bg-white/90 backdrop-blur-sm shadow-[0_8px_30px_rgba(0,0,0,0.04)];
+}
+
+.admin-pill-active {
+  @apply border-primary/30 bg-primary-pale text-primary shadow-sm;
+}
+
+.admin-pill-idle {
+  @apply border-neutral-200 bg-white text-neutral-600 hover:border-primary/20 hover:bg-primary-pale/40;
+}
+
+.admin-nav-idle {
+  @apply text-neutral-600 hover:border-neutral-200 hover:bg-white;
+}
+
+.admin-nav-active {
+  @apply border-primary/30 bg-primary-pale text-primary shadow-sm;
+}
+
+.admin-nav-traction-active {
+  @apply border-amber-300/60 bg-amber-50 text-amber-900 shadow-sm;
+}
+
+
 .text-shimmer {
   background: linear-gradient(90deg, #0a0a0a 0%, #525252 50%, #0a0a0a 100%);
   background-size: 200% auto;
@@ -154,4 +179,5 @@ body {
   -webkit-text-fill-color: transparent;
   animation: shimmer 6s linear infinite;
 }
+
 

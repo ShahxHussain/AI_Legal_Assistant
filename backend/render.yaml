@@ -11,7 +11,7 @@ services:
       - key: TOGETHER_API_KEY
         sync: false
       - key: LLM_MODEL
-        value: google/gemma-4-31B-it
+        value: meta-llama/Llama-3.3-70B-Instruct-Turbo
       - key: LLM_MAX_TOKENS
         value: "3200"
       - key: LLM_CONVERSATIONAL_MAX_TOKENS

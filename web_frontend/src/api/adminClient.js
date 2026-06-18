@@ -65,8 +65,8 @@ export async function verifyAdminKey(adminKey) {
   setStoredAdminKey(adminKey);
 }
 
-export function fetchOverview() {
-  return adminFetch('/admin/stats/overview?days=7');
+export function fetchOverview(days = 7) {
+  return adminFetch(`/admin/stats/overview?days=${days}`);
 }
 
 export function fetchQuestionsPerDay(days = 30) {
