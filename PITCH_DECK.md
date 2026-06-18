@@ -350,7 +350,7 @@ The law books are in **English**. The answer can be in **any of 7 languages**.
 |----------|-----|
 | Landing page | https://ai-legal-assistant-seven.vercel.app/ |
 | Live API | https://ai-legal-assistant-fes8.onrender.com |
-| Android APK | [Google Drive](https://drive.google.com/file/d/1t2dTJpqPHm4YOMAs8gbkLC22IyyyV04H/view?usp=sharing) |
+| Android APK | [Google Drive](https://drive.google.com/file/d/11kjhu_RQ4olDE5OpseV8hcw6jIq4YkG-/view?usp=sharing) |
 | GitHub | https://github.com/ShahxHussain/AI_Legal_Assistant |
 
 ---

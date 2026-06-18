@@ -8,7 +8,7 @@
 |----------|-----|
 | **Landing page** (marketing + admin) | https://ai-legal-assistant-seven.vercel.app/ |
 | **Flutter web app** (primary demo) | https://ai-legal-assistant-two.vercel.app/ |
-| **Android APK** | [Google Drive](https://drive.google.com/file/d/1t2dTJpqPHm4YOMAs8gbkLC22IyyyV04H/view?usp=sharing) |
+| **Android APK** | [Google Drive](https://drive.google.com/file/d/11kjhu_RQ4olDE5OpseV8hcw6jIq4YkG-/view?usp=sharing) |
 | **API** | https://ai-legal-assistant-fes8.onrender.com |
 | **Admin dashboard** | https://ai-legal-assistant-seven.vercel.app/admin |
 | **GitHub** | https://github.com/ShahxHussain/AI_Legal_Assistant |

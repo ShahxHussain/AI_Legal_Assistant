@@ -5,9 +5,9 @@ export const SITE = {
   webAppUrl: 'https://ai-legal-assistant-two.vercel.app/',
   landingUrl: 'https://ai-legal-assistant-seven.vercel.app/',
   apkUrl:
-    'https://drive.google.com/uc?export=download&id=1t2dTJpqPHm4YOMAs8gbkLC22IyyyV04H',
+    'https://drive.google.com/uc?export=download&id=11kjhu_RQ4olDE5OpseV8hcw6jIq4YkG-',
   apkViewUrl:
-    'https://drive.google.com/file/d/1t2dTJpqPHm4YOMAs8gbkLC22IyyyV04H/view?usp=sharing',
+    'https://drive.google.com/file/d/11kjhu_RQ4olDE5OpseV8hcw6jIq4YkG-/view?usp=sharing',
   githubUrl: 'https://github.com/ShahxHussain/AI_Legal_Assistant',
   proDocUrl:
     'https://github.com/ShahxHussain/AI_Legal_Assistant/blob/main/docs/COURT_COMPANION_PRO.md',

@@ -76,11 +76,31 @@ Full steps: [`../docs/FLUTTER_WEB_DEPLOY.md`](../docs/FLUTTER_WEB_DEPLOY.md)
 
 ## Build APK
 
+Release builds use the **Render production API** automatically (`api_config.dart`). Override only if needed:
+
 ```powershell
-flutter build apk --release --dart-define=API_BASE_URL=https://your-app.onrender.com
+cd Frontend
+.\scripts\build-apk.ps1
 ```
 
-APK output: `build/app/outputs/flutter-apk/app-release.apk`
+Or manually:
+
+```powershell
+flutter pub get
+flutter test
+flutter build apk --release --dart-define=API_BASE_URL=https://ai-legal-assistant-fes8.onrender.com
+```
+
+**Output:** `build/app/outputs/flutter-apk/app-release.apk`
+
+**After build:** upload the APK to Google Drive (or GitHub Releases), then update the download link in `web_frontend/src/config/site.js` (`apkUrl` / `apkViewUrl`).
+
+| Check | Detail |
+|-------|--------|
+| Version | `pubspec.yaml` → `version: x.y.z+build` (Android `versionCode` = build number) |
+| API | Release → `https://ai-legal-assistant-fes8.onrender.com` |
+| Signing | Debug keystore (hackathon/demo). For Play Store, add a release keystore in `android/app/build.gradle`. |
+| Permissions | Internet, microphone (voice), Bluetooth (some STT devices) — see `AndroidManifest.xml` |
 
 ## Project structure
 
